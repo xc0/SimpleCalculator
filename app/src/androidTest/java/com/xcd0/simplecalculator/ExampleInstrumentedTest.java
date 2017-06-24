@@ -1,4 +1,4 @@
-package com.xcd0.simplecalclator;
+package com.xcd0.simplecalculator;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

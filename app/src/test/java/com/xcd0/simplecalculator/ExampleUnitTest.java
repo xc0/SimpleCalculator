@@ -1,4 +1,4 @@
-package com.xcd0.simplecalclator;
+package com.xcd0.simplecalculator;
 
 import org.junit.Test;
 
