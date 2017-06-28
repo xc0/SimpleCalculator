@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
 	private Button[] button = new Button[ buttonRow.length * 5 ];
+	private String[] pre = {"", ""};
 	
 	String[] tmp = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^", "(", ")", "ANS" };
 	
@@ -119,6 +120,11 @@ public class MainActivity extends AppCompatActivity {
 	
 	private void makeLine( String text, String[] out ) {
 		boolean lineBreakFlag = false;
+		// 3回ACタップで履歴消去
+		if( text.equals( "AC" ) && this.pre[0].equals( "AC" ) && this.pre[1].equals( "AC" ) ) {
+			viewResetter();
+		}
+		inputKeep(text);
 		if( this.pNum == 198 ) {
 			// 行番号をリセット
 			viewResetter();
@@ -296,5 +302,10 @@ public class MainActivity extends AppCompatActivity {
 		mainView.addView( upperView, uv );
 		mainView.addView( lowerView, lv );
 		
+	}
+	
+	private void inputKeep( String text ){
+		this.pre[1] = this.pre[0];
+		this.pre[0] = text;
 	}
 }
