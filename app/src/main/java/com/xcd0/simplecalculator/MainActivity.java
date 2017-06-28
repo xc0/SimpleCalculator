@@ -23,7 +23,6 @@ import com.xcd0.simplecalculator.Common;
 
 public class MainActivity extends AppCompatActivity {
 	
-	private int b0w = -1;
 	private int pNum = -1;
 	private int dp1 = 0;
 	private float dp = 0;
@@ -32,12 +31,8 @@ public class MainActivity extends AppCompatActivity {
 	private ScrollView scrollView;
 	private LinearLayout upperScrollView;
 	private LinearLayout[] inputRow = new LinearLayout[ 200 ];
-//	private LinearLayout[] inputRowLeft = new LinearLayout[ 100 ];
-//	private LinearLayout[] inputRowRight = new LinearLayout[ 100 ];
 	private TextView[] lineNum = new TextView[ 200 ];
-//	private TextView outFigure;
-	private TextView[] inputView = new TextView[ 100 ];
-//	private TextView[] output = new TextView[ 100 ];
+	private TextView[] inputView = new TextView[ 200 ];
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
 	private Button[] button = new Button[ buttonRow.length * 5 ];
@@ -123,11 +118,19 @@ public class MainActivity extends AppCompatActivity {
 		// 3回ACタップで履歴消去
 		if( text.equals( "AC" ) && this.pre[0].equals( "AC" ) && this.pre[1].equals( "AC" ) ) {
 			viewResetter();
+			
 		}
 		inputKeep(text);
 		if( this.pNum == 198 ) {
 			// 行番号をリセット
+			
+			// 99番目の表示をコピって最初に貼る
+			String preInput, preOutput;
+			preInput = ( String ) this.inputView[ 198 ].getText();
+			preOutput = ( String ) this.inputView[ 199 ].getText();
 			viewResetter();
+			this.inputView[ pNum+1 ].setText( preOutput );
+			
 		}
 		// 0 input
 		// 1 output
@@ -141,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 			bf.append( Integer.toString( this.pNum / 2 ) );
 			bf.append( ": " );
 			this.lineNum[ pNum ].setText( bf.toString() );
-			this.lineNum[ pNum+1 ].setText( "   >> " );
+			this.lineNum[ pNum+1 ].setText( "      " );
 			viewAdder( this.pNum );
 			viewAdder( this.pNum + 1 );
 		}
@@ -153,6 +156,9 @@ public class MainActivity extends AppCompatActivity {
 		if( out[2].equals( "1" ) ) {
 			//viewAdder( this.pNum+1 );
 			// =で結果を表示した後改行
+			
+			this.lineNum[ pNum+1 ].setText( "   >> " );
+			
 			this.pNum += 2;
 			viewMaker( this.pNum );
 			viewMaker( this.pNum+1 );
@@ -160,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
 			bf.append( Integer.toString( this.pNum / 2 ) );
 			bf.append( ": "  );
 			this.lineNum[ pNum ].setText( bf.toString() );
-			this.lineNum[ pNum+1 ].setText( " >> " );
+			this.lineNum[ pNum+1 ].setText( "      " );
 			viewAdder( this.pNum );
 			viewAdder( this.pNum+1 );
 		}
@@ -229,27 +235,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 	
 	private void viewResetter() {
-		float upperFontSize = 8 * dp;
-		
-		System.out.println( "99" );
-		// 99番目の表示をコピって最初に貼る
-		String preInput, preOutput;
-		preInput = ( String ) this.inputView[ 198 ].getText();
-		preOutput = ( String ) this.inputView[ 199 ].getText();
-		
 		
 		this.upperScrollView.removeAllViews();
-		pNum = 0;
-		
-		viewMaker( pNum );
-		
-		
-		this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
-		this.inputView[ pNum ].setText( preInput );
-		this.inputView[ pNum+1 ].setText( preOutput );
-		
-		
-		viewAdder( this.pNum );
+		this.pNum = -1;
 	}
 	
 	private void makeMainLayout(){
