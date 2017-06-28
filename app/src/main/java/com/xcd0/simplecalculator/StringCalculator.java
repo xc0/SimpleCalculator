@@ -534,12 +534,7 @@ class stringCalculator {
 	
 	private boolean inputCharaChecker( String text ) {
 		boolean A = false;
-		/* 多分for-eachにできるっぽいのでこれでいい
-		for( int i = 0; i < this.CHARA.length; i++ ) {
-			if( text.equals( this.CHARA[ i ] ) ) {
-				return true;
-			}
-		}*/
+		
 		for( String tmp : this.CHARA ) {
 			if( text.equals( tmp ) ) {
 				A = true;
