@@ -31,12 +31,13 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout upperView;
 	private ScrollView scrollView;
 	private LinearLayout upperScrollView;
-	private LinearLayout[] inputRow = new LinearLayout[ 100 ];
-	private LinearLayout[] inputRowLeft = new LinearLayout[ 100 ];
-	private LinearLayout[] inputRowRight = new LinearLayout[ 100 ];
-	private TextView[] lineNum = new TextView[ 100 ];
+	private LinearLayout[] inputRow = new LinearLayout[ 200 ];
+//	private LinearLayout[] inputRowLeft = new LinearLayout[ 100 ];
+//	private LinearLayout[] inputRowRight = new LinearLayout[ 100 ];
+	private TextView[] lineNum = new TextView[ 200 ];
+//	private TextView outFigure;
 	private TextView[] inputView = new TextView[ 100 ];
-	private TextView[] output = new TextView[ 100 ];
+//	private TextView[] output = new TextView[ 100 ];
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
 	private Button[] button = new Button[ buttonRow.length * 5 ];
@@ -113,113 +114,65 @@ public class MainActivity extends AppCompatActivity {
 		
 		String[] out;
 		out = MainActivity.this.common.MainProcess( text );
-		/*
-			表示したい情報
-			行番号 入力文字列   出力値
-			out[7]
-			[0] break line 1:0
-			[1] input   flag
-			[2] input value
-			[3] output  flag
-			[4] output value
-			[5] nextState
-		*/
-		
 		makeLine( text, out );
-		
-		
 	}
 	
 	private void makeLine( String text, String[] out ) {
 		boolean lineBreakFlag = false;
-		if( this.pNum == 99 ) {
+		if( this.pNum == 198 ) {
 			// 行番号をリセット
 			viewResetter();
 		}
-		/* // old
-			表示したい情報
-			行番号 入力文字列   出力値
-			out[7]
-			[0] break line 1:0
-			[1] input   flag
-			[2] input line
-			[3] output  flag
-			[4] output line
-			[5] acFlag
-		* /
-		if( this.pNum == -1  || out[0] == "1" || out[5] == "AC" ) {
-			lineBreakFlag = true;
-			if( out[5].equals( "AC" ) && pNum != -1 ) {
-				String tmp;
-				tmp = this.inputView[ this.pNum ].getText() + " \\";
-				this.inputView[ pNum ].setText( tmp );
-			}
-			this.pNum++;
-			viewMaker( pNum );
-			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
-		}
-		if( out[1].equals( "1" ) ){
-			this.inputView[ pNum ].setText( Html.fromHtml( out[ 2 ] ) );
-		}
-		if( out[3].equals( "1" ) ){
-			this.output[ pNum ].setText( out[ 4 ] );
-		}else{
-			this.output[ pNum ].setText( "" );
-		}
-		*/
-		// new
 		// 0 input
 		// 1 output
 		// 2 statusCode
 		if( this.pNum == -1 ){
 			this.pNum++;
 			viewMaker( this.pNum );
-			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
+			viewMaker( this.pNum+1 );
+			StringBuffer bf = new StringBuffer();
+			bf.append( " " );
+			bf.append( Integer.toString( this.pNum / 2 ) );
+			bf.append( ": " );
+			this.lineNum[ pNum ].setText( bf.toString() );
+			this.lineNum[ pNum+1 ].setText( "   >> " );
 			viewAdder( this.pNum );
+			viewAdder( this.pNum + 1 );
 		}
 		
 		this.inputView[ pNum ].setText( Html.fromHtml( out[ 0 ] ) );
-		this.output[ pNum ].setText( out[ 1 ] );
+		this.inputView[ pNum+1 ].setText( Html.fromHtml( out[ 1 ] ) );
+		//this.output[ pNum ].setText( out[ 1 ] );
 		
 		if( out[2].equals( "1" ) ) {
-			this.pNum++;
+			//viewAdder( this.pNum+1 );
+			// =で結果を表示した後改行
+			this.pNum += 2;
 			viewMaker( this.pNum );
-			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
+			viewMaker( this.pNum+1 );
+			StringBuffer bf = new StringBuffer();
+			bf.append( Integer.toString( this.pNum / 2 ) );
+			bf.append( ": "  );
+			this.lineNum[ pNum ].setText( bf.toString() );
+			this.lineNum[ pNum+1 ].setText( " >> " );
 			viewAdder( this.pNum );
+			viewAdder( this.pNum+1 );
 		}
 	}
 	
 	private void viewMaker( int pNum ) {
 		
-		float upperFontSize = 10 * dp;
+		float upperFontSize = 11 * dp;
 		int fontColor = 0xff000000;
 		
 		// 1行分の表示をまとめる要素を作成
 		this.inputRow[ pNum ] = new LinearLayout( this );
 		this.inputRow[ pNum ].setOrientation( LinearLayout.HORIZONTAL );
-		LinearLayout.LayoutParams ir = new LinearLayout.LayoutParams( MP, 0 );
+		LinearLayout.LayoutParams ir = new LinearLayout.LayoutParams( ViewGroup.LayoutParams.WRAP_CONTENT, MP );
 		this.inputRow[ pNum ].setPadding( 0, dp1, 0, 0 );
-		ir.weight = 1;
 		this.inputRow[ pNum ].setLayoutParams( ir );
 		
-		this.inputRowLeft[ pNum ] = new LinearLayout( this );
-		this.inputRowLeft[ pNum ].setOrientation( LinearLayout.HORIZONTAL );
-		this.inputRowLeft[ pNum ].setGravity( Gravity.LEFT );
-		this.inputRowLeft[ pNum ].setPadding( 0, dp1, 0, 0 );
-		LinearLayout.LayoutParams irl = new LinearLayout.LayoutParams( 0, MP );
-		irl.weight = 1;
-		this.inputRowLeft[ pNum ].setLayoutParams( irl );
 		
-		this.inputRowRight[ pNum ] = new LinearLayout( this );
-		this.inputRowRight[ pNum ].setOrientation( LinearLayout.HORIZONTAL );
-		this.inputRowRight[ pNum ].setGravity( Gravity.BOTTOM );
-		this.inputRowRight[ pNum ].setPadding( 0, dp1, 0, 0 );
-		LinearLayout.LayoutParams irr = new LinearLayout.LayoutParams( 0, MP );
-		irr.weight = 1;
-		this.inputRowRight[ pNum ].setLayoutParams( irr );
-		
-		
-		// 1行分の要素の先頭に行番号を表示する
 		// 行番号を表示する要素を作成
 		this.lineNum[ pNum ] = new TextView( this );
 		this.lineNum[ pNum ].setGravity( Gravity.RIGHT );
@@ -229,36 +182,31 @@ public class MainActivity extends AppCompatActivity {
 		ln.weight = 1;
 		this.lineNum[ pNum ].setLayoutParams( ln );
 		
+		
 		// 入力文字列を表示する要素を作成
 		this.inputView[ pNum ] = new TextView( this );
 		this.inputView[ pNum ].setGravity( Gravity.LEFT );
 		this.inputView[ pNum ].setTextColor( fontColor );
 		this.inputView[ pNum ].setTextSize( upperFontSize );
-		LinearLayout.LayoutParams io = new LinearLayout.LayoutParams( MP, MP );
-		io.weight = 4;
+		LinearLayout.LayoutParams io = new LinearLayout.LayoutParams( 0, MP );
+		io.weight = 9;
 		this.inputView[ pNum ].setLayoutParams( io );
-		
-		// 出力値を表示する要素を作成
-		this.output[ pNum ] = new TextView( this );
-		this.output[ pNum ].setGravity( Gravity.RIGHT );
-		//this.output[ pNum ].setGravity( Gravity.BOTTOM );
-		this.output[ pNum ].setTextColor( fontColor );
-		this.output[ pNum ].setTextSize( upperFontSize );
-		LinearLayout.LayoutParams op = new LinearLayout.LayoutParams( MP, MP );
-		//LinearLayout.LayoutParams op = new LinearLayout.LayoutParams( 0, MP );
-		//op.weight = 10;
-		this.output[ pNum ].setLayoutParams( op );
 	}
 	
 	private void viewAdder( int pNum ) {
 		// 行番号を表示する要素lineNumを1行分の要素をまとめるinputRowに追加
-		this.inputRowLeft[ pNum ].addView( this.lineNum[ pNum ] );
-		// 入力された演算子を表示する要素inputOperatorを1行分の要素をまとめるinputRowに追加
-		this.inputRowLeft[ pNum ].addView( this.inputView[ pNum ] );
-		// 入力された数値を表示する要素inputNumを1行分の要素をまとめるinputRowに追加
-		this.inputRowRight[ pNum ].addView( this.output[ pNum ] );
-		this.inputRow[ pNum ].addView( this.inputRowLeft[ pNum ] );
-		this.inputRow[ pNum ].addView( this.inputRowRight[ pNum ] );
+		//this.inputRowLeft[ pNum ].addView( this.lineNum[ pNum ] );
+		//this.inputRowLeft[ pNum ].addView( this.inputView[ pNum ] );
+		//this.inputRow[ pNum ].addView( this.inputRowLeft[ pNum ] );
+		//this.inputRowRight[ pNum ].addView( this.outFigure );
+		//this.inputRowRight[ pNum ].addView( this.output[ pNum ] );
+		//this.inputRow[ pNum ].addView( this.inputRowRight[ pNum ] );
+		//this.inputRow[ pNum ].addView( this.inputRowRight[ pNum ] );
+		
+		
+		this.inputRow[ pNum ].addView( this.lineNum[ pNum ] );
+		this.inputRow[ pNum ].addView( this.inputView[ pNum ] );
+		
 		// 1行分の表示をまとめる要素inputRowをupperViewのupperScrollViewに追加する
 		this.upperScrollView.addView( this.inputRow[ pNum ] );
 		
@@ -269,12 +217,10 @@ public class MainActivity extends AppCompatActivity {
 		} );
 	}
 	
-	
 	public String getpreInput() {
 		return ( String ) inputView[ ( this.pNum + 99 ) % 100 ].getText();
 		
 	}
-	
 	
 	private void viewResetter() {
 		float upperFontSize = 8 * dp;
@@ -282,8 +228,8 @@ public class MainActivity extends AppCompatActivity {
 		System.out.println( "99" );
 		// 99番目の表示をコピって最初に貼る
 		String preInput, preOutput;
-		preInput = ( String ) this.inputView[ 99 ].getText();
-		preOutput = ( String ) this.output[ 99 ].getText();
+		preInput = ( String ) this.inputView[ 198 ].getText();
+		preOutput = ( String ) this.inputView[ 199 ].getText();
 		
 		
 		this.upperScrollView.removeAllViews();
@@ -294,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
 		
 		this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
 		this.inputView[ pNum ].setText( preInput );
-		this.output[ pNum ].setText( preOutput );
+		this.inputView[ pNum+1 ].setText( preOutput );
 		
 		
 		viewAdder( this.pNum );
@@ -303,7 +249,6 @@ public class MainActivity extends AppCompatActivity {
 	private void makeMainLayout(){
 		
 		this.common = new Common( this );
-		
 		
 		this.mainView = new LinearLayout( this );
 		this.upperView = new LinearLayout( this );

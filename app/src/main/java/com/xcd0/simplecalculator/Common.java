@@ -88,7 +88,7 @@ public class Common {
 		return output;
 	}
 	
-	public String[] MainProcess_( String text ) {
+	public String[] MainProcess_old( String text ) {
 		this.text = text;
 		//this.nextState = 0;
 
