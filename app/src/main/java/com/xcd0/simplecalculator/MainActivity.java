@@ -11,6 +11,9 @@ import android.widget.TextView;
 import android.widget.LinearLayout;
 import android.view.Gravity;
 import android.widget.Button;
+
+import android.text.Html;
+
 import android.text.Layout.Alignment;
 //import android.graphics.Typeface;
 //import android.view.ViewGroup.MarginLayoutParams;
@@ -195,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
 			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
 		}
 		if( out[1] == "1" ){
-			this.inputView[ pNum ].setText( out[ 2 ] );
+			this.inputView[ pNum ].setText( Html.fromHtml( out[ 2 ] ) );
 		}
 		if( out[3] == "1" ){
 			this.output[ pNum ].setText( out[ 4 ] );
@@ -209,8 +212,8 @@ public class MainActivity extends AppCompatActivity {
 	
 	private void viewMaker( int pNum ) {
 		
-		float upperFontSize = 8 * dp;
-		int fc = 0xff000000;
+		float upperFontSize = 10 * dp;
+		int fontColor = 0xff000000;
 		
 		// 1行分の表示をまとめる要素を作成
 		this.inputRow[ pNum ] = new LinearLayout( this );
@@ -241,8 +244,8 @@ public class MainActivity extends AppCompatActivity {
 		// 行番号を表示する要素を作成
 		this.lineNum[ pNum ] = new TextView( this );
 		this.lineNum[ pNum ].setGravity( Gravity.RIGHT );
-		this.lineNum[ pNum ].setTextColor( fc );
-		this.lineNum[ pNum ].setTextSize( 8 * dp );
+		this.lineNum[ pNum ].setTextColor( fontColor );
+		this.lineNum[ pNum ].setTextSize( upperFontSize );
 		LinearLayout.LayoutParams ln = new LinearLayout.LayoutParams( 0, MP );
 		ln.weight = 1;
 		this.lineNum[ pNum ].setLayoutParams( ln );
@@ -250,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
 		// 入力文字列を表示する要素を作成
 		this.inputView[ pNum ] = new TextView( this );
 		this.inputView[ pNum ].setGravity( Gravity.LEFT );
-		this.inputView[ pNum ].setTextColor( fc );
+		this.inputView[ pNum ].setTextColor( fontColor );
 		this.inputView[ pNum ].setTextSize( upperFontSize );
 		LinearLayout.LayoutParams io = new LinearLayout.LayoutParams( MP, MP );
 		io.weight = 4;
@@ -260,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
 		this.output[ pNum ] = new TextView( this );
 		this.output[ pNum ].setGravity( Gravity.RIGHT );
 		//this.output[ pNum ].setGravity( Gravity.BOTTOM );
-		this.output[ pNum ].setTextColor( fc );
+		this.output[ pNum ].setTextColor( fontColor );
 		this.output[ pNum ].setTextSize( upperFontSize );
 		LinearLayout.LayoutParams op = new LinearLayout.LayoutParams( MP, MP );
 		//LinearLayout.LayoutParams op = new LinearLayout.LayoutParams( 0, MP );
