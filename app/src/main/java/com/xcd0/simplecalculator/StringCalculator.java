@@ -18,6 +18,7 @@ class stringCalculator {
 	private int inputCounter;
 	private double preAns;
 	private int statusCode;
+	private String[] inputArray;
 	
 	
 	stringCalculator() {
@@ -30,6 +31,7 @@ class stringCalculator {
 		
 		String[] tmp = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^", "(", ")", "ANS" };
 		this.CHARA = tmp;
+		this.inputArray = new String[ 200 ];
 		
 	}
 	
@@ -40,24 +42,24 @@ class stringCalculator {
 		this.text = text;
 		this.output = inputChecker();
 		if( this.output.equals( "OK" ) ) {
-			this.output = calcStringArray( this.inputString );
+			this.output = calcStringArray( this.inputArray );
 			this.statusCode = 1;
-		}else if( this.output.equals( "_0div" ) ) {
+		} else if( this.output.equals( "_0div" ) ) {
 			this.output = "ERROR! Can not divide Zero!";
 			this.statusCode = -1;
-		}else if( this.output.equals( "_1stack" ) ) {
+		} else if( this.output.equals( "_1stack" ) ) {
 			this.output = "ERROR! Num of operand is bad.";
 			this.statusCode = -1;
-		}else if( this.output.equals( "_2p" ) ) {
+		} else if( this.output.equals( "_2p" ) ) {
 			this.output = "ERROR! Near the parenthesis is bad.";
 			this.statusCode = -1;
-		}else if( this.output.equals( "_3+=" ) ){
+		} else if( this.output.equals( "_3+=" ) ) {
 			this.output = "ERROR! One before Equal must be number.";
 			this.statusCode = -1;
-		}else if( this.output.equals( "_4pnum" ) ){
+		} else if( this.output.equals( "_4pnum" ) ) {
 			this.output = "ERROR! num of '(' and ')' is wrong";
 			this.statusCode = -1;
-		}else if( this.output.equals( "NONE" ) ){
+		} else if( this.output.equals( "NONE" ) ) {
 			this.output = "";
 			this.statusCode = 0;
 		}
@@ -67,14 +69,20 @@ class stringCalculator {
 	// -1 error
 	// 0  unresolvable
 	// 1  resolve
-	public int getStatus(){
+	public int getStatus() {
 		return this.statusCode;
 	}
-	public String getInputString(){
+	
+	public String getInputString() {
+		if( this.inputString[ 0 ] == null ) {
+			return "";
+		}
 		String out;
 		StringBuilder bf = new StringBuilder();
-		for( String tmp: this.inputString ){
-			bf.append( tmp );
+		for( String tmp : this.inputString ) {
+			if( tmp != null ) {
+				bf.append( tmp );
+			}
 		}
 		out = bf.toString();
 		return out;
@@ -105,25 +113,28 @@ class stringCalculator {
 		//StringQueue inputQueue = new StringQueue( input.length );
 		StringStack inputStack = new StringStack( input.length );
 		StringStack oprandStack = new StringStack( input.length );
-		String f, s;
+		String f, s, o;
 		for( String tmp : input ) {
+			if( tmp.equals( "=" )) break;
 			inputStack.push( tmp );
 			if( inputTypeChecker( tmp ).equals( "OPE" ) ) {
+				o = inputStack.pop();
 				s = inputStack.pop();
 				f = inputStack.pop();
-				if( Double.valueOf( s ) == 0 && tmp.equals( "÷" ) ){
+				if( Double.valueOf( s ) == 0 && tmp.equals( "÷" ) ) {
 					return "_0div";
 				}
 				
-				String out = Double.toString( calc( s, f, tmp ) );
+				String out = Double.toString( calc( s, f, o ) );
 				inputStack.push( out );
 			}
 		}
-		if( inputStack.size() == 1 ){
-			return inputStack.pop();
-		}else{
-			return "_1stack";
+		if( inputStack.size() == 1 ) {
+			o = inputStack.pop();
+		} else {
+			o = "_1stack";
 		}
+		return o;
 	}
 	
 	private double calc( String f, String s, String o ) {
@@ -160,18 +171,24 @@ class stringCalculator {
 		String output;
 		
 		// 入力自体がエラーなら追加せず返す
-		if( inputCharaChecker( this.text ) ) {
+		if( !inputCharaChecker( this.text ) ) {
 			output = "_2p";
 			return output;
-		}
-		if( this.text.equals( "ANS" ) ) {
-			this.inputCounter++;
+		} else if( this.text.equals( "ANS" ) ) {
 			this.inputString[ inputCounter ] = Double.toString( this.preAns );
+			this.inputCounter++;
 			output = "NONE";
 			return output;
-		}
-		if( this.text.equals( "=" ) ) {
-			if( inputTypeChecker( inputString[ inputCounter ] ).equals( "OPE" ) ) {
+		} else if( this.text.equals( "AC" ) ) {
+			for( int i = this.inputCounter - 1; i >= 0; i-- ){
+				this.inputString[i] = null;
+			}
+			//this.inputString[ inputCounter ] = Double.toString( this.preAns );
+			this.inputCounter = 0;
+			output = "NONE";
+			return output;
+		} else if( this.text.equals( "=" ) ) {
+			if( inputCounter > 0 && ( inputString[ inputCounter - 1 ] ).equals( "OPE" ) ) {
 				// =の直前が演算子ならエラー 1+=
 				output = "_3+=";
 				return output;
@@ -182,7 +199,9 @@ class stringCalculator {
 				output = "_4pnum";
 				return output;
 			} else {
-				String[] in = inputNumReader( this.inputString );
+				this.inputString[ inputCounter ] = this.text;
+				this.inputCounter++;
+				this.inputArray = inputNumReader( this.inputString );
 				output = "OK";
 				return output;
 			}
@@ -193,8 +212,8 @@ class stringCalculator {
 			return output;
 		} else {
 			// =やACやBSでない時は適当に返す
-			this.inputCounter++;
 			this.inputString[ inputCounter ] = this.text;
+			this.inputCounter++;
 			output = "NONE";
 			return output;
 		}
@@ -211,27 +230,36 @@ class stringCalculator {
 		for( String tmp : this.CHARA ) {
 			if( text.equals( tmp ) ) {
 				A = true;
+				break;
 			}
 		}
 		// 括弧の直前、直後のエラー
 		if( A ) {
-			if( inputTypeChecker( text ).equals( "NUM" ) ) {    // )1
+			String tmp = inputTypeChecker( text );
+			if( tmp.equals( "NUM" ) ) {    // )1
+				if( this.inputString[ this.inputCounter ] == null ) {
+					return true;
+				}
 				if( this.inputString[ this.inputCounter ].equals( ")" ) ) {
 					A = false;
 				}
 			}
-			if( inputTypeChecker( text ).equals( "OPE" ) ) {    // (+
-				if( this.inputString[ this.inputCounter ].equals( "(" ) ) {
+			// 最初の入力が数字でないならエラー
+			if( this.inputString[ 0 ] == null ) {
+				return false;
+			}
+			if( tmp.equals( "OPE" ) ) {    // (+
+				if( this.inputString[ this.inputCounter - 1 ].equals( "(" ) ) {
 					A = false;
 				}
 			}
 			if( text.equals( ")" ) ) {  // +)
-				if( inputTypeChecker( this.inputString[ this.inputCounter ] ).equals( "OPE" ) ) {
+				if( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "OPE" ) ) {
 					A = false;
 				}
 			}
 			if( text.equals( "(" ) ) {  // 1(
-				if( !( inputTypeChecker( this.inputString[ this.inputCounter ] ).equals( "OPE" ) ) ) {
+				if( !( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "OPE" ) ) ) {
 					// 直前が演算子でないならエラー
 					A = false;
 				}
@@ -259,7 +287,8 @@ class stringCalculator {
 	// 0に個数、1~は位取りした数または記号を返す
 	// 入力が=で終わってなかったらエラー
 	private String[] inputNumReader( String[] text ) {
-		int length = text.length;
+		int length = inputCounter;
+		
 		if( !( text[ length - 1 ].equals( "=" ) ) ) {
 			String[] error = new String[ 2 ];
 			error[ 0 ] = "";
@@ -287,42 +316,59 @@ class stringCalculator {
 				
 			}
 			preS = tmpS;
-		}
+		}/*
 		if( out[ cNumArray ].equals( "=" ) ) {
-			
-		}
-		String[] output = new String[ cNumArray - 1 ];
+			out[ cNumArray ] = out[ cNumArray ];
+		}*/
+		String[] output = new String[ cNumArray ];
 		
 		for( i = 0; i < cNumArray; i++ ) {
 			output[ i ] = out[ i ];
 		}
 		return output;
 	}
+	// { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+	// , ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^"
+	// , "(", ")", "ANS" };
 	
 	private String inputTypeChecker( String text ) {
+		String output = null;
 		for( int i = 0; i < this.CHARA.length; i++ ) {
 			if( text.equals( this.CHARA[ i ] ) ) {
-				if( i < 10 )        // 0-9
-					return "NUM";
-				if( i == 11 )       // .
-					return "DOT";
-				if( i == 12 )       // AC
-					return "AC";
-				if( i == 13 )       // BS
-					return "BS";
-				if( i == 14 )       // =
-					return "EQU";
-				if( i <= 19 )       // +-×÷%^
-					return "OPE";
-				if( i == 20 )       // (
-					return "STR";
-				if( i == 21 )       // )
-					return "END";
-				if( i == 22 )       //
-					return "ANS";
+				if( i < 10 ) {       // 0-9
+					output = "NUM";
+					break;
+				} else if( i == 10 ) {     // .
+					output = "DOT";
+					break;
+				} else if( i == 11 ) {     // AC
+					output = "AC";
+					break;
+				} else if( i == 12 ) {       // BS
+					output = "BS";
+					break;
+				} else if( i == 13 ) {      // =
+					output = "EQU";
+					break;
+				} else if( i <= 19 ) {      // +-×÷%^
+					output = "OPE";
+					break;
+				} else if( i == 20 ) {      // (
+					output = "STR";
+					break;
+				} else if( i == 21 ) {      // )
+					output = "END";
+					break;
+				} else if( i == 22 ) {      //
+					output = "ANS";
+					break;
+				}
 			}
 		}
-		return "OTH";
+		if( output == null ) {
+			output = "OTH";
+		}
+		return output;
 	}
 	
 	public String[] rpnizer( String[] input ) {
@@ -333,7 +379,11 @@ class stringCalculator {
 		
 		for( int i = 0; i < length; i++ ) {
 			tmp = inputTypeChecker( input[ i ] );
-			if( tmp.equals( "END" ) ) {
+			if( tmp.equals( "OTH" ) ){
+				// 数値
+				outQueue.enqueue( input[ i ] );
+				continue;
+			}else if( tmp.equals( "END" ) ) {
 				// (までの演算子をoutにpush
 				for( int j = 0; j < opeStack.size(); j++ ) {
 					tmp2 = opeStack.pop();
@@ -342,21 +392,19 @@ class stringCalculator {
 					outQueue.enqueue( tmp2 );
 				}
 				continue;
-			}
-			if( tmp.equals( "STR" ) ) {
+			}else if( tmp.equals( "STR" ) ) {
 				opeStack.push( input[ i ] );
 				continue;
-			}
-			if( tmp.equals( "OPE" ) ) {
+			}else if( tmp.equals( "OPE" ) ) {
 				while( true ) {
 					// ループ
 					if( opeStack.size() == 0 ) {
-						// opestackが空なら
+						// opeStackが空なら
 						// input[i]をopeStackにpushしてcontinue
 						opeStack.push( input[ i ] );
 						break;
 					} else {
-						// openstackが空でないなら
+						// opestackが空でないなら
 						String topOpe = opeStack.pop();
 						// opeStackの最後に突っ込んだのとinput[i]の優先順位を比較
 						if( opeRanker( topOpe ) <= opeRanker( input[ i ] ) ) {
@@ -373,9 +421,15 @@ class stringCalculator {
 				}
 				// input[i]が演算子かつinput[i]をopeStackにpushしたらcontinue
 				continue;
+				//}
+			}else if( tmp.equals( "EQU" ) ) {
+				while( opeStack.size() != 0 ) {
+					outQueue.enqueue( opeStack.pop() );
+				}
+				outQueue.enqueue( input[ i ] );
+				break;
 			}
-			// 数値
-			outQueue.enqueue( input[ i ] );
+			//ここには来ないはず
 		}
 		length = outQueue.size();
 		String[] out;
@@ -397,6 +451,15 @@ class stringCalculator {
 		if( input.equals( "%" ) )
 			return 7;
 		return 99;
+	}
+	
+	private void clear(){
+		
+		this.output = "";
+		this.inputString = new String[ 100 ];
+		this.inputCounter = 0;
+		this.statusCode = 0;
+		this.inputArray = new String[ 200 ];
 	}
 }
 
@@ -427,7 +490,7 @@ class StringStack {
 	}
 	
 	public int size() {
-		return this.stackSize;
+		return this.stackPointer;
 	}
 }
 
@@ -445,26 +508,24 @@ class StringQueue {
 	}
 	
 	public void enqueue( String in ) {
-		if( this.str == this.end ) {
+		
+		if( this.str + this.queueSize  == ( this.end + 1 + this.queueSize ) % this.queueSize ) {
 			return;
 		}
-		
-		this.end = this.end < this.queueSize - 1 ? this.end + 1 : 0;
-		this.queue[ this.end ] = in;
+		this.end++;
+		this.end = this.end % this.queueSize;
+		this.queue[ this.end - 1 ] = in;
 	}
 	
 	public String dequeue() {
 		if( this.str == this.end ) {
 			return "";
 		}
+		this.str++;
+		// strがmax超えてたら減らす
+		this.str = this.str % this.queueSize;
+		return this.queue[ this.str - 1 ];
 		
-		if( this.str < this.queueSize - 2 ) {
-			this.str++;
-			return this.queue[ this.str - 1 ];
-		} else {
-			this.str = 0;
-			return this.queue[ this.queueSize - 1 ];
-		}
 	}
 	
 	public int size() {

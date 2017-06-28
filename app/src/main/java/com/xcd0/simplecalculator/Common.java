@@ -59,7 +59,7 @@ public class Common {
 		this.inputKeeper = "";
 		this.eqCounter = 0;
 		
-		stringCalculator SC = new stringCalculator();
+		this.SC = new stringCalculator();
 		/*
 		// 後述の追加機能の実装で使用するカウンタ
 		this.count = 0;
@@ -72,15 +72,15 @@ public class Common {
 	}
 	
 	public String[] MainProcess( String text ) {
-		String[] output = new String[2];
-		output[0] =  SC.getInputString();
+		String[] output = new String[3];
 		output[1] = SC.inputOneCharaString( text );
-		
+		output[0] = SC.getInputString();
+		output[2] = Integer.toString( SC.getStatus() );
 		switch( SC.getStatus() ){
 			case -1:
 				break;
 			case 0:
-				output[2] = "";
+				output[1] = "";
 				break;
 			case 1:
 				break;
@@ -252,7 +252,7 @@ public class Common {
 		if( this.input == 0 ) { // AC
 			clear();
 		} else if( this.input == 1 ) {  // =
-			if( this.pretext == "=" ) {        // = =
+			if( this.pretext.equals( "=" ) ) {        // = =
 				this.eqCounter++;
 				this.firstOperand = Long.valueOf( this.outputLine );
 				
@@ -339,7 +339,6 @@ public class Common {
 			this.state = 5;
 			this.nextState = 1;
 		}
-		return;
 	}
 	
 	/*	< state = 2 > 演算子選択	既存の入力例 C+, C+-, C1+, C1+-, C1+2+, C1+2+-
@@ -395,7 +394,6 @@ public class Common {
 			this.state = 5;
 			this.nextState = 1;
 		}
-		return;
 	}
 	
 	
@@ -404,7 +402,7 @@ public class Common {
 			C1+2, C
 	*/
 	private void arithmeticProcessState() {
-		if( this.inputOperator == "" ) {
+		if( this.inputOperator.equals( "" )) {
 			// C1=
 			this.ans = Long.valueOf( this.outputLine );
 		} else {

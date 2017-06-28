@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.LinearLayout;
@@ -26,9 +27,7 @@ public class MainActivity extends AppCompatActivity {
 	private int pNum = -1;
 	private int dp1 = 0;
 	private float dp = 0;
-	
 	private LinearLayout mainView;
-	
 	private LinearLayout upperView;
 	private ScrollView scrollView;
 	private LinearLayout upperScrollView;
@@ -38,82 +37,40 @@ public class MainActivity extends AppCompatActivity {
 	private TextView[] lineNum = new TextView[ 100 ];
 	private TextView[] inputView = new TextView[ 100 ];
 	private TextView[] output = new TextView[ 100 ];
-	
-	
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
-	private Button[] button = new Button[ buttonRow.length * 4 ];
+	private Button[] button = new Button[ buttonRow.length * 5 ];
 	
-	private String bLabel[] = { "AC", "±", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "-", "1", "2", "3", "+", "0", ".", "=" };
+	String[] tmp = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^", "(", ")", "ANS" };
 	
+	private String bLabel[] =
+			{ "AC", "ANS", "BS", "(", ")"
+			, "7", "8", "9", "%", "^"
+			, "4", "5", "6", "×", "÷"
+			, "1", "2", "3", "+", "-"
+			, "0", ".", "=" };
 	private final int MP = LinearLayout.LayoutParams.MATCH_PARENT;
 	private Common common;
 	
 	@Override
 	public void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
-		this.common = new Common( this );
 		
-		
-		this.mainView = new LinearLayout( this );
-		this.upperView = new LinearLayout( this );
-		this.scrollView = new ScrollView( this );
-		this.upperScrollView = new LinearLayout( this );
-		this.lowerView = new LinearLayout( this );
-		
-		//setContentView(R.layout.activity_main);
-		
-		//LinearLayout mainView = new LinearLayout(this);
-		mainView.setOrientation( LinearLayout.VERTICAL );
-		mainView.setLayoutParams( new LinearLayout.LayoutParams( MP, MP ) );
-		mainView.setGravity( Gravity.CENTER );
-		setContentView( mainView );
-		
-		//LinearLayout upperView = new LinearLayout(this);
-		upperView.setOrientation( LinearLayout.VERTICAL );
-		LinearLayout.LayoutParams uv = new LinearLayout.LayoutParams( MP, 0 );
-		uv.weight = 3.0f;
-		upperView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
-		upperView.setLayoutParams( uv );
-		
-		this.dp = getResources().getDisplayMetrics().density;
-		this.dp1 = ( int ) dp;
-		//ScrollView scrollView = new ScrollView(this);
-		upperView.addView( scrollView, new LinearLayout.LayoutParams( MP, MP ) );
-		
-		upperScrollView.setOrientation( LinearLayout.VERTICAL );
-		LinearLayout.LayoutParams usv = new LinearLayout.LayoutParams( MP, 0 );
-		usv.weight = 3.0f;
-		upperScrollView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
-		upperScrollView.setLayoutParams( usv );
-		scrollView.addView( upperScrollView, new LinearLayout.LayoutParams( MP, ViewGroup.LayoutParams.WRAP_CONTENT ) );
-		
-		
-		//LinearLayout lowerView = new LinearLayout(this);
-		lowerView.setOrientation( LinearLayout.VERTICAL );
-		LinearLayout.LayoutParams lv = new LinearLayout.LayoutParams( MP, 0 );
-		lv.weight = 5.0f;
-		lowerView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
-		lowerView.setLayoutParams( lv );
-		
-		
-		setContentView( mainView );
-		mainView.addView( upperView, uv );
-		mainView.addView( lowerView, lv );
-		
+		makeMainLayout();
 		
 		for( int i = 0; i < buttonRow.length; i++ ) {
 			buttonRow[ i ] = new LinearLayout( this );
 			buttonRow[ i ].setOrientation( LinearLayout.HORIZONTAL );
 			LinearLayout.LayoutParams br = new LinearLayout.LayoutParams( MP, 0 );
 			br.weight = 1;
+			buttonRow[ i ].setGravity( Gravity.CENTER_HORIZONTAL );
 			buttonRow[ i ].setLayoutParams( br );
 			buttonRow[ i ].setPadding( 0, dp1, 0, 0 );
 			lowerView.addView( buttonRow[ i ] );
 			
-			for( int j = 0; j < 4; j++ ) {
-				int num = i * 4 + j;
-				if( num == 19 )
+			for( int j = 0; j < 5; j++ ) {
+				int num = i * 5 + j;
+				if( num >= this.bLabel.length )
 					break;
 				button[ j ] = new Button( this );
 				//button[j].setText(String.valueOf(num));
@@ -125,12 +82,16 @@ public class MainActivity extends AppCompatActivity {
 				
 				LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams( 0, MP );
 				bl.weight = 1;
-				if( b0w < 0 && num == 16 )
+				//if( b0w < 0 && num == 16 )
+				if( num == 20 || num == 22 ){
 					bl.weight = 2;
+				}
 				button[ j ].setLayoutParams( bl );
 				buttonRow[ i ].addView( button[ j ] );
 				//if(false){
-				if( j != 3 ) {
+				if( num == 22 )
+					num = 22;
+				if( j != 4 ) {
 					LinearLayout empty = new LinearLayout( this );
 					empty.setOrientation( LinearLayout.HORIZONTAL );
 					LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( dp1, MP );
@@ -171,7 +132,11 @@ public class MainActivity extends AppCompatActivity {
 	
 	private void makeLine( String text, String[] out ) {
 		boolean lineBreakFlag = false;
-		/*
+		if( this.pNum == 99 ) {
+			// 行番号をリセット
+			viewResetter();
+		}
+		/* // old
 			表示したい情報
 			行番号 入力文字列   出力値
 			out[7]
@@ -181,14 +146,10 @@ public class MainActivity extends AppCompatActivity {
 			[3] output  flag
 			[4] output line
 			[5] acFlag
-		*/
-		if( this.pNum == 99 ) {
-			// 行番号をリセット
-			viewResetter();
-		}
+		* /
 		if( this.pNum == -1  || out[0] == "1" || out[5] == "AC" ) {
 			lineBreakFlag = true;
-			if( out[5] == "AC" && pNum != -1 ) {
+			if( out[5].equals( "AC" ) && pNum != -1 ) {
 				String tmp;
 				tmp = this.inputView[ this.pNum ].getText() + " \\";
 				this.inputView[ pNum ].setText( tmp );
@@ -197,15 +158,33 @@ public class MainActivity extends AppCompatActivity {
 			viewMaker( pNum );
 			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
 		}
-		if( out[1] == "1" ){
+		if( out[1].equals( "1" ) ){
 			this.inputView[ pNum ].setText( Html.fromHtml( out[ 2 ] ) );
 		}
-		if( out[3] == "1" ){
+		if( out[3].equals( "1" ) ){
 			this.output[ pNum ].setText( out[ 4 ] );
 		}else{
 			this.output[ pNum ].setText( "" );
 		}
-		if( lineBreakFlag ) {
+		*/
+		// new
+		// 0 input
+		// 1 output
+		// 2 statusCode
+		if( this.pNum == -1 ){
+			this.pNum++;
+			viewMaker( this.pNum );
+			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
+			viewAdder( this.pNum );
+		}
+		
+		this.inputView[ pNum ].setText( Html.fromHtml( out[ 0 ] ) );
+		this.output[ pNum ].setText( out[ 1 ] );
+		
+		if( out[2].equals( "1" ) ) {
+			this.pNum++;
+			viewMaker( this.pNum );
+			this.lineNum[ pNum ].setText( Integer.toString( this.pNum ) + ": " );
 			viewAdder( this.pNum );
 		}
 	}
@@ -319,5 +298,58 @@ public class MainActivity extends AppCompatActivity {
 		
 		
 		viewAdder( this.pNum );
+	}
+	
+	private void makeMainLayout(){
+		
+		this.common = new Common( this );
+		
+		
+		this.mainView = new LinearLayout( this );
+		this.upperView = new LinearLayout( this );
+		this.scrollView = new ScrollView( this );
+		this.upperScrollView = new LinearLayout( this );
+		this.lowerView = new LinearLayout( this );
+		
+		//setContentView(R.layout.activity_main);
+		
+		//LinearLayout mainView = new LinearLayout(this);
+		mainView.setOrientation( LinearLayout.VERTICAL );
+		mainView.setLayoutParams( new LinearLayout.LayoutParams( MP, MP ) );
+		mainView.setGravity( Gravity.CENTER );
+		setContentView( mainView );
+		
+		//LinearLayout upperView = new LinearLayout(this);
+		upperView.setOrientation( LinearLayout.VERTICAL );
+		LinearLayout.LayoutParams uv = new LinearLayout.LayoutParams( MP, 0 );
+		uv.weight = 3.0f;
+		upperView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
+		upperView.setLayoutParams( uv );
+		
+		this.dp = getResources().getDisplayMetrics().density;
+		this.dp1 = ( int ) dp;
+		//ScrollView scrollView = new ScrollView(this);
+		upperView.addView( scrollView, new LinearLayout.LayoutParams( MP, MP ) );
+		
+		upperScrollView.setOrientation( LinearLayout.VERTICAL );
+		LinearLayout.LayoutParams usv = new LinearLayout.LayoutParams( MP, 0 );
+		usv.weight = 3.0f;
+		upperScrollView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
+		upperScrollView.setLayoutParams( usv );
+		scrollView.addView( upperScrollView, new LinearLayout.LayoutParams( MP, ViewGroup.LayoutParams.WRAP_CONTENT ) );
+		
+		
+		//LinearLayout lowerView = new LinearLayout(this);
+		lowerView.setOrientation( LinearLayout.VERTICAL );
+		LinearLayout.LayoutParams lv = new LinearLayout.LayoutParams( MP, 0 );
+		lv.weight = 5.0f;
+		lowerView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
+		lowerView.setLayoutParams( lv );
+		
+		
+		setContentView( mainView );
+		mainView.addView( upperView, uv );
+		mainView.addView( lowerView, lv );
+		
 	}
 }
