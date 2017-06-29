@@ -338,12 +338,12 @@ public class StringCalculator {
 	
 	private int opeRanker( String input ) {
 		
-		if( input.equals( "×" ) || input.equals( "÷" ) )
-			return 4;
 		if( input.equals( "^" ) )
-			return 5;
+			return 4;
 		if( input.equals( "%" ) )
-			return 7;
+			return 6;
+		if( input.equals( "×" ) || input.equals( "÷" ) )
+			return 6;
 		if( input.equals( "+" ) || input.equals( "-" ) )
 			return 8;
 		return 99;
