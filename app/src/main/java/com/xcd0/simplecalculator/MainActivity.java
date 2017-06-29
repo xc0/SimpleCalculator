@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
 	private Button[] button = new Button[ buttonRow.length * 5 ];
 	
-	private String[] pre = {"", ""};
+	private String[] pre = {"", "", ""};
 	private StringCalculator SC = new StringCalculator();
 	
 	private LinearLayout.LayoutParams[] bl = new LinearLayout.LayoutParams[25];
@@ -202,10 +202,14 @@ public class MainActivity extends AppCompatActivity {
 		String[] output = new String[3];
 		
 		if( this.pNum < 1 && text.equals( "ANS" )){
-			output[1] = "";
-			output[0] = SC.getInputString();
-			output[2] = "0";
-			return output;
+			if( this.pre[2].equals( "" ) ){
+				output[1] = "";
+				output[0] = SC.getInputString();
+				output[2] = "0";
+				return output;
+			}else{
+				SC.setPreAns( this.pre[2] );
+			}
 		}
 		output[1] = SC.inputOneCharaString( text );
 		output[0] = SC.getInputString();
@@ -226,8 +230,8 @@ public class MainActivity extends AppCompatActivity {
 		boolean lineBreakFlag = false;
 		// 3回ACタップで履歴消去
 		if( text.equals( "AC" ) && this.pre[0].equals( "AC" ) && this.pre[1].equals( "AC" ) ) {
+			this.pre[2] = SC.getOutputString();
 			viewResetter();
-			
 		}
 		inputKeep(text);
 		if( this.pNum == 198 ) {

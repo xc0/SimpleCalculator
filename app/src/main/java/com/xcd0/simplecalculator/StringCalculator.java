@@ -342,10 +342,10 @@ public class StringCalculator {
 			return 4;
 		if( input.equals( "^" ) )
 			return 5;
-		if( input.equals( "+" ) || input.equals( "-" ) )
-			return 6;
 		if( input.equals( "%" ) )
 			return 7;
+		if( input.equals( "+" ) || input.equals( "-" ) )
+			return 8;
 		return 99;
 	}
 	
@@ -532,6 +532,9 @@ public class StringCalculator {
 				break;
 			}
 		}
+		if( !A ){
+			// ANSの直接入力
+		}
 		// 括弧の直前、直後のエラー
 		if( A ) {
 			String tmp = inputTypeChecker( text );
@@ -691,6 +694,14 @@ public class StringCalculator {
 		}
 		out = bf.toString();
 		return out;
+	}
+	
+	public String getOutputString() {
+		return this.preAns;
+	}
+	
+	public void setPreAns( String in ) {
+		this.preAns = in;
 	}
 	
 }
