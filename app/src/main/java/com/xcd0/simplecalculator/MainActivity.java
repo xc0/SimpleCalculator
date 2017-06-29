@@ -1,27 +1,34 @@
 package com.xcd0.simplecalculator;
 
-import android.graphics.Color;
-import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
+
+import android.os.StrictMode;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewGroup;
+
+import android.util.Log;
+import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.LinearLayout;
-import android.view.Gravity;
 import android.widget.Button;
 
 import android.text.Html;
 
-import android.text.Layout.Alignment;
-//import android.graphics.Typeface;
-//import android.view.ViewGroup.MarginLayoutParams;
-
-import com.xcd0.simplecalculator.Common;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.Point;
+import android.view.Display;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Gravity;
 
 public class MainActivity extends AppCompatActivity {
+	
+	private final int MP = LinearLayout.LayoutParams.MATCH_PARENT;
+	private final int WC = LinearLayout.LayoutParams.WRAP_CONTENT;
 	
 	private int pNum = -1;
 	private int dp1 = 0;
@@ -36,7 +43,13 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
 	private Button[] button = new Button[ buttonRow.length * 5 ];
+	
 	private String[] pre = {"", ""};
+	private StringCalculator SC = new StringCalculator();
+	
+	private LinearLayout.LayoutParams[] bl = new LinearLayout.LayoutParams[25];
+	
+	private Point currentDisplaySize;
 	
 	String[] tmp = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^", "(", ")", "ANS" };
 	
@@ -45,72 +58,168 @@ public class MainActivity extends AppCompatActivity {
 			, "7", "8", "9", "%", "^"
 			, "4", "5", "6", "×", "÷"
 			, "1", "2", "3", "+", "-"
-			, "0", ".", "=" };
-	private final int MP = LinearLayout.LayoutParams.MATCH_PARENT;
-	private Common common;
+			, "0", ".", "=", "", "" };
 	
 	@Override
 	public void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
+		getWindow().addFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN );
+		
+		for( int i = 0; i < 5; i++ ){
+			this.buttonRow[i] = new LinearLayout( this );
+			
+			for( int j = 0; j < 5; j++ ){
+				this.button[i*5+j] = new Button( this );
+			}
+		}
 		
 		makeMainLayout();
-		
 		for( int i = 0; i < buttonRow.length; i++ ) {
-			buttonRow[ i ] = new LinearLayout( this );
-			buttonRow[ i ].setOrientation( LinearLayout.HORIZONTAL );
+			this.buttonRow[ i ].setOrientation( LinearLayout.HORIZONTAL );
 			LinearLayout.LayoutParams br = new LinearLayout.LayoutParams( MP, 0 );
 			br.weight = 1;
-			buttonRow[ i ].setGravity( Gravity.CENTER_HORIZONTAL );
-			buttonRow[ i ].setLayoutParams( br );
-			buttonRow[ i ].setPadding( 0, dp1, 0, 0 );
+			this.buttonRow[ i ].setGravity( Gravity.CENTER_HORIZONTAL );
+			this.buttonRow[ i ].setLayoutParams( br );
+			this.buttonRow[ i ].setPadding( 0, dp1, 0, 0 );
 			lowerView.addView( buttonRow[ i ] );
 			
 			for( int j = 0; j < 5; j++ ) {
 				int num = i * 5 + j;
-				if( num >= this.bLabel.length )
+				if( num >= 23 )
 					break;
-				button[ j ] = new Button( this );
-				//button[j].setText(String.valueOf(num));
-				//button[j].setTag(String.valueOf(num));
-				button[ j ].setText( bLabel[ num ] );
-				button[ j ].setTag( bLabel[ num ] );
-				button[ j ].setTextSize( 10 * dp1 );
-				button[ j ].setBackgroundColor( Color.rgb( 255, 255, 255 ) );
+				this.button[ num ].setText( bLabel[ num ] );
+				this.button[ num ].setTag( bLabel[ num ] );
+				this.button[ num ].setTextSize( 10 * dp1 );
+				button[ num ].setBackgroundColor( Color.rgb( 255, 255, 255 ) );
 				
-				LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams( 0, MP );
-				bl.weight = 1;
+				bl[ num ] = new LinearLayout.LayoutParams( 0, MP );
+				this.bl[ num ].weight = 1;
 				//if( b0w < 0 && num == 16 )
-				if( num == 20 || num == 22 ){
-					bl.weight = 2;
+				if( num == 20 || num == 22 ) {
+					bl[ num ].weight = 2;
 				}
-				button[ j ].setLayoutParams( bl );
-				buttonRow[ i ].addView( button[ j ] );
-				//if(false){
-				if( num == 22 )
-					num = 22;
-				if( j != 4 ) {
+				button[ num ].setLayoutParams( bl[ num ] );
+				buttonRow[ i ].addView( button[ num ] );
+				
+				if( num == 20 || num == 21 ) {
 					LinearLayout empty = new LinearLayout( this );
 					empty.setOrientation( LinearLayout.HORIZONTAL );
 					LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( dp1, MP );
 					empty.setLayoutParams( zero );
 					buttonRow[ i ].addView( empty );
+				}else {
+					if( j != 4 || num != 22 ) {
+						LinearLayout empty = new LinearLayout( this );
+						empty.setOrientation( LinearLayout.HORIZONTAL );
+						LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( dp1, MP );
+						empty.setLayoutParams( zero );
+						buttonRow[ i ].addView( empty );
+					}
 				}
 				
-				button[ j ].setOnClickListener( new View.OnClickListener() {
+				button[ num ].setOnClickListener( new View.OnClickListener() {
 					public void onClick( View view ) {
 						MainActivity.this.buttonClicked( view.getTag().toString() );
 					}
 				} );
 			}
+			
 		}
-		
+		VTO:
+		{
+			ViewTreeObserver oMV = mainView.getViewTreeObserver();
+			oMV.addOnGlobalLayoutListener( new ViewTreeObserver.OnGlobalLayoutListener() {
+				@Override
+				public void onGlobalLayout() {
+					Log.d( "MainActivity : ", "mainView width  = " + mainView.getWidth() );
+					Log.d( "MainActivity : ", "mainView height = " + mainView.getHeight() );
+				}
+			} );
+			ViewTreeObserver ob0 = button[ 0 ].getViewTreeObserver();
+			ob0.addOnGlobalLayoutListener( new ViewTreeObserver.OnGlobalLayoutListener() {
+				@Override
+				public void onGlobalLayout() {
+					Log.d( "MainActivity : ", "button[0] width  = " + button[ 0 ].getWidth() );
+					Log.d( "MainActivity : ", "button[0] height = " + button[ 0 ].getHeight() );
+				}
+			} );
+			ViewTreeObserver ob1 = button[ 1 ].getViewTreeObserver();
+			ob0.addOnGlobalLayoutListener( new ViewTreeObserver.OnGlobalLayoutListener() {
+				@Override
+				public void onGlobalLayout() {
+					Log.d( "MainActivity : ", "button[1] width  = " + button[ 1 ].getWidth() );
+					Log.d( "MainActivity : ", "button[1] height = " + button[ 1 ].getHeight() );
+				}
+			} );
+			ViewTreeObserver ob19 = button[ 4 ].getViewTreeObserver();
+			ob0.addOnGlobalLayoutListener( new ViewTreeObserver.OnGlobalLayoutListener() {
+				@Override
+				public void onGlobalLayout() {
+					Log.d( "MainActivity : ", "button[19] width  = " + button[ 4 ].getWidth() );
+					Log.d( "MainActivity : ", "button[19] height = " + button[ 4 ].getHeight() );
+				}
+			} );
+			
+		}
+	}
+	
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		switch( newConfig.orientation ) {
+			case Configuration.ORIENTATION_PORTRAIT:    // 縦
+				this.mainView.setOrientation( LinearLayout.VERTICAL );
+				Log.d("oCCp : ", "mainView width = " + mainView.getWidth());
+				Log.d("oCCp : ", "mainView height = " + mainView.getHeight());
+				Log.d("oCCp : ", "button[0] width = " + button[0].getWidth());
+				Log.d("oCCp : ", "button[0] height = " + button[0].getHeight());
+				this.currentDisplaySize = getViewSize( this.mainView );
+				break;
+			case Configuration.ORIENTATION_LANDSCAPE:   // 横
+				this.mainView.setOrientation( LinearLayout.HORIZONTAL );
+				Log.d("oCCh : ", "mainView width = " + mainView.getWidth());
+				Log.d("oCCh : ", "mainView height = " + mainView.getHeight());
+				Log.d("oCCh : ", "button[0] width = " + button[0].getWidth());
+				Log.d("oCCh : ", "button[0] height = " + button[0].getHeight());
+				//this.mainView.setLayoutParams( new LinearLayout.LayoutParams( LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT ) );
+				this.currentDisplaySize = getViewSize( this.mainView );
+				break;
+			default:
+				break;
+		}
+		super.onConfigurationChanged( newConfig );
 	}
 	
 	public void buttonClicked( String text ) {
-		
 		String[] out;
-		out = MainActivity.this.common.MainProcess( text );
+		
+		this.currentDisplaySize = getViewSize( this.mainView );
+		
+		out = mainProcess( text );
 		makeLine( text, out );
+	}
+	
+	private String[] mainProcess( String text ){
+		String[] output = new String[3];
+		
+		if( this.pNum < 1 && text.equals( "ANS" )){
+			output[1] = "";
+			output[0] = SC.getInputString();
+			output[2] = "0";
+			return output;
+		}
+		output[1] = SC.inputOneCharaString( text );
+		output[0] = SC.getInputString();
+		output[2] = Integer.toString( SC.getStatus() );
+		switch( SC.getStatus() ){
+			case -1:
+				break;
+			case 0:
+				output[1] = "";
+				break;
+			case 1:
+				break;
+		}
+		return output;
 	}
 	
 	private void makeLine( String text, String[] out ) {
@@ -123,7 +232,6 @@ public class MainActivity extends AppCompatActivity {
 		inputKeep(text);
 		if( this.pNum == 198 ) {
 			// 行番号をリセット
-			
 			// 99番目の表示をコピって最初に貼る
 			String preInput, preOutput;
 			preInput = ( String ) this.inputView[ 198 ].getText();
@@ -132,6 +240,7 @@ public class MainActivity extends AppCompatActivity {
 			this.inputView[ pNum+1 ].setText( preOutput );
 			
 		}
+		
 		// 0 input
 		// 1 output
 		// 2 statusCode
@@ -151,7 +260,6 @@ public class MainActivity extends AppCompatActivity {
 		
 		this.inputView[ pNum ].setText( Html.fromHtml( out[ 0 ] ) );
 		this.inputView[ pNum+1 ].setText( Html.fromHtml( out[ 1 ] ) );
-		//this.output[ pNum ].setText( out[ 1 ] );
 		
 		if( out[2].equals( "1" ) ) {
 			//viewAdder( this.pNum+1 );
@@ -177,13 +285,12 @@ public class MainActivity extends AppCompatActivity {
 		float upperFontSize = 11 * dp;
 		int fontColor = 0xff000000;
 		
-		// 1行分の表示をまとめる要素を作成
+		// 行の表示をまとめる要素を作成
 		this.inputRow[ pNum ] = new LinearLayout( this );
 		this.inputRow[ pNum ].setOrientation( LinearLayout.HORIZONTAL );
-		LinearLayout.LayoutParams ir = new LinearLayout.LayoutParams( ViewGroup.LayoutParams.WRAP_CONTENT, MP );
+		LinearLayout.LayoutParams ir = new LinearLayout.LayoutParams( WC, MP );
 		this.inputRow[ pNum ].setPadding( 0, dp1, 0, 0 );
 		this.inputRow[ pNum ].setLayoutParams( ir );
-		
 		
 		// 行番号を表示する要素を作成
 		this.lineNum[ pNum ] = new TextView( this );
@@ -194,8 +301,7 @@ public class MainActivity extends AppCompatActivity {
 		ln.weight = 1;
 		this.lineNum[ pNum ].setLayoutParams( ln );
 		
-		
-		// 入力文字列を表示する要素を作成
+		// 文字列を表示する要素を作成
 		this.inputView[ pNum ] = new TextView( this );
 		this.inputView[ pNum ].setGravity( Gravity.LEFT );
 		this.inputView[ pNum ].setTextColor( fontColor );
@@ -206,20 +312,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 	
 	private void viewAdder( int pNum ) {
-		// 行番号を表示する要素lineNumを1行分の要素をまとめるinputRowに追加
-		//this.inputRowLeft[ pNum ].addView( this.lineNum[ pNum ] );
-		//this.inputRowLeft[ pNum ].addView( this.inputView[ pNum ] );
-		//this.inputRow[ pNum ].addView( this.inputRowLeft[ pNum ] );
-		//this.inputRowRight[ pNum ].addView( this.outFigure );
-		//this.inputRowRight[ pNum ].addView( this.output[ pNum ] );
-		//this.inputRow[ pNum ].addView( this.inputRowRight[ pNum ] );
-		//this.inputRow[ pNum ].addView( this.inputRowRight[ pNum ] );
-		
-		
 		this.inputRow[ pNum ].addView( this.lineNum[ pNum ] );
 		this.inputRow[ pNum ].addView( this.inputView[ pNum ] );
 		
-		// 1行分の表示をまとめる要素inputRowをupperViewのupperScrollViewに追加する
 		this.upperScrollView.addView( this.inputRow[ pNum ] );
 		
 		scrollView.post( new Runnable() {
@@ -227,11 +322,6 @@ public class MainActivity extends AppCompatActivity {
 				MainActivity.this.scrollView.fullScroll( View.FOCUS_DOWN );
 			}
 		} );
-	}
-	
-	public String getpreInput() {
-		return ( String ) inputView[ ( this.pNum + 99 ) % 100 ].getText();
-		
 	}
 	
 	private void viewResetter() {
@@ -242,58 +332,62 @@ public class MainActivity extends AppCompatActivity {
 	
 	private void makeMainLayout(){
 		
-		this.common = new Common( this );
-		
 		this.mainView = new LinearLayout( this );
 		this.upperView = new LinearLayout( this );
 		this.scrollView = new ScrollView( this );
 		this.upperScrollView = new LinearLayout( this );
 		this.lowerView = new LinearLayout( this );
 		
-		//setContentView(R.layout.activity_main);
+		this.mainView.setOrientation( LinearLayout.VERTICAL );
+		LinearLayout.LayoutParams mv = new LinearLayout.LayoutParams( MP, MP );
+		this.mainView.setLayoutParams( mv );
+		this.mainView.setGravity( Gravity.CENTER );
+		setContentView( this.mainView );
 		
-		//LinearLayout mainView = new LinearLayout(this);
-		mainView.setOrientation( LinearLayout.VERTICAL );
-		mainView.setLayoutParams( new LinearLayout.LayoutParams( MP, MP ) );
-		mainView.setGravity( Gravity.CENTER );
-		setContentView( mainView );
-		
-		//LinearLayout upperView = new LinearLayout(this);
-		upperView.setOrientation( LinearLayout.VERTICAL );
+		this.upperView.setOrientation( LinearLayout.VERTICAL );
 		LinearLayout.LayoutParams uv = new LinearLayout.LayoutParams( MP, 0 );
-		uv.weight = 3.0f;
-		upperView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
-		upperView.setLayoutParams( uv );
+		uv.weight = 3;
+		this.upperView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
+		this.upperView.setLayoutParams( uv );
 		
 		this.dp = getResources().getDisplayMetrics().density;
 		this.dp1 = ( int ) dp;
-		//ScrollView scrollView = new ScrollView(this);
 		upperView.addView( scrollView, new LinearLayout.LayoutParams( MP, MP ) );
 		
-		upperScrollView.setOrientation( LinearLayout.VERTICAL );
+		this.upperScrollView.setOrientation( LinearLayout.VERTICAL );
 		LinearLayout.LayoutParams usv = new LinearLayout.LayoutParams( MP, 0 );
-		usv.weight = 3.0f;
-		upperScrollView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
-		upperScrollView.setLayoutParams( usv );
-		scrollView.addView( upperScrollView, new LinearLayout.LayoutParams( MP, ViewGroup.LayoutParams.WRAP_CONTENT ) );
+		usv.weight = 3;
+		this.upperScrollView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
+		this.upperScrollView.setLayoutParams( usv );
+		scrollView.addView( this.upperScrollView, new LinearLayout.LayoutParams( MP, WC) );
 		
 		
-		//LinearLayout lowerView = new LinearLayout(this);
-		lowerView.setOrientation( LinearLayout.VERTICAL );
+		this.lowerView.setOrientation( LinearLayout.VERTICAL );
 		LinearLayout.LayoutParams lv = new LinearLayout.LayoutParams( MP, 0 );
-		lv.weight = 5.0f;
-		lowerView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
-		lowerView.setLayoutParams( lv );
+		lv.weight = 5;
+		this.lowerView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
+		this.lowerView.setLayoutParams( lv );
 		
 		
-		setContentView( mainView );
-		mainView.addView( upperView, uv );
-		mainView.addView( lowerView, lv );
+		setContentView( this.mainView );
+		this.mainView.addView( this.upperView, uv );
+		this.mainView.addView( this.lowerView, lv );
 		
 	}
 	
 	private void inputKeep( String text ){
 		this.pre[1] = this.pre[0];
 		this.pre[0] = text;
+	}
+	
+	public static Point getViewSize(View View){
+		Point point = new Point(0, 0);
+		point.set(View.getWidth(), View.getHeight());
+		
+		return point;
+	}
+	
+	public void viewSizeChecker(){
+		
 	}
 }

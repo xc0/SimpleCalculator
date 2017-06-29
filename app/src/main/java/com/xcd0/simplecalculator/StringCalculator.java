@@ -10,7 +10,8 @@ package com.xcd0.simplecalculator;
 * 入力は
 * AC,BS,(),=,0~9,+-×÷%^
 */
-class stringCalculator {
+public class StringCalculator {
+	
 	private String text;
 	private String output;
 	private String[] inputString;
@@ -22,7 +23,7 @@ class stringCalculator {
 	private String[] inputArray;
 	
 	
-	stringCalculator() {
+	StringCalculator() {
 		this.text = "";
 		this.output = "";
 		this.inputString = new String[ 100 ];
@@ -32,7 +33,7 @@ class stringCalculator {
 		
 		String[] tmp = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^", "(", ")", "ANS" };
 		this.CHARA = tmp;
-		this.inputArray = new String[ 200 ];
+		this.inputArray = new String[ 100 ];
 		this.preInput = "";
 	}
 	
@@ -43,6 +44,7 @@ class stringCalculator {
 		this.output = inputChecker();
 		
 		if( this.output.equals( "OK" ) ) {
+			this.preInput = this.text;
 			this.output = calcStringArray( this.inputArray );
 			this.statusCode = 1;
 		}
@@ -65,26 +67,10 @@ class stringCalculator {
 			this.output = "ERROR! input is bad.";
 			this.statusCode = -1;
 		} else if( this.output.equals( "NONE" ) ) {
+			this.preInput = this.text;
 			this.output = "";
 			this.statusCode = 0;
 		}
-		/*
-		// output[1]の最後に.0が合ったら除く
-		int length = this.output.length();
-		if( length > 2
-				&& this.output.charAt( length - 1 ) == '0'
-				&& this.output.charAt( length - 2 ) == '.' ){
-			char[] tmp = new char[length - 2];
-			for( int i = 0; i < length - 2; i++ ){
-				tmp[i] = this.output.charAt( i );
-			}
-			StringBuilder bf = new StringBuilder();
-			for( int i = 0; i < length - 2; i++ ){
-				bf.append( tmp[i] );
-			}
-			this.output = bf.toString();
-		}*/
-		preInput = this.text;
 		return this.output;
 	}
 	
@@ -97,9 +83,7 @@ class stringCalculator {
 	
 	// 後置記法の演算器
 	public String rpnCalculator( String[] input ) {
-		//StringQueue inputQueue = new StringQueue( input.length );
 		StringStack inputStack = new StringStack( input.length );
-		StringStack oprandStack = new StringStack( input.length );
 		String f, s, o;
 		for( String tmp : input ) {
 			if( tmp.equals( "=" ) )
@@ -335,8 +319,13 @@ class stringCalculator {
 				}
 				outQueue.enqueue( input[ i ] );
 				break;
+			}else {
+				//ここには来ないはず
+				String[] error = new String[ 2 ];
+				error[ 0 ] = "";
+				error[ 1 ] = "on rpnizer, input analize error.";
+				return error;
 			}
-			//ここには来ないはず
 		}
 		length = outQueue.size();
 		String[] out;
@@ -513,9 +502,10 @@ class stringCalculator {
 					out[ cNumArray ] = text[ i ];
 					cNumArray++;
 				}else{
+					// ここには来ないはず
 					String[] error = new String[ 2 ];
 					error[ 0 ] = "";
-					error[ 1 ] = "input analizer error.";
+					error[ 1 ] = "on input Num Reader, input analize error.";
 					return error;
 				}
 			}
@@ -534,6 +524,7 @@ class stringCalculator {
 	
 	private boolean inputCharaChecker( String text ) {
 		boolean A = false;
+		
 		
 		for( String tmp : this.CHARA ) {
 			if( text.equals( tmp ) ) {
@@ -700,93 +691,6 @@ class stringCalculator {
 		}
 		out = bf.toString();
 		return out;
-	/*
-	// 文字列を正しく計算できる場合(=で終わるなど)のみ計算する
-	public String calcString( String input ) {
-		String[] in;
-		in = new String[ input.length() ];
-		// ちぎって
-		for( int i = 0; i < input.length(); i++ ) {
-			in[ i ] = String.valueOf( input.charAt( i ) );
-		}
-		// 呼ぶ
-		return calcStringArray( inputNumReader( in ) );
-	}
-	*/
 	}
 	
 }
-
-class StringStack {
-	private int stackSize;
-	private int stackPointer;
-	private String[] stack;
-	
-	public StringStack( int size ) {
-		this.stackPointer = 0;
-		this.stackSize = size;
-		
-		stack = new String[ stackSize ];
-	}
-	
-	public void push( String tmp ) {
-		if( stackPointer >= stackSize ) {
-			return;
-		}
-		stack[ stackPointer++ ] = tmp;
-	}
-	
-	public String pop() {
-		if( stackPointer <= 0 ) {
-			return "";
-		}
-		return stack[ --stackPointer ];
-	}
-	
-	public int size() {
-		return this.stackPointer;
-	}
-}
-
-class StringQueue {
-	private int queueSize;
-	private int str, end;
-	private String[] queue;
-	
-	public StringQueue( int size ) {
-		this.queueSize = size;
-		this.str = 0;
-		this.end = 0;
-		this.queue = new String[ this.queueSize ];
-	}
-	
-	public void enqueue( String in ) {
-		
-		if( this.str + this.queueSize == ( this.end + 1 + this.queueSize ) % this.queueSize ) {
-			return;
-		}
-		this.end++;
-		this.end = this.end % this.queueSize;
-		this.queue[ this.end - 1 ] = in;
-	}
-	
-	public String dequeue() {
-		if( this.str == this.end ) {
-			return "";
-		}
-		this.str++;
-		// strがmax超えてたら減らす
-		this.str = this.str % this.queueSize;
-		return this.queue[ this.str - 1 ];
-		
-	}
-	
-	public int size() {
-		return ( end - str + queueSize ) % queueSize;
-	}
-	
-	public String checkFirst() {
-		return this.queue[ this.str ];
-	}
-}
-
