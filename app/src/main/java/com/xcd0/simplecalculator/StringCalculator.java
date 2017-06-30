@@ -46,30 +46,34 @@ public class StringCalculator {
 		if( this.output.equals( "OK" ) ) {
 			this.preInput = this.text;
 			this.output = calcStringArray( this.inputArray );
+			if( this.output.equals( "NaN" ) ){
+				this.output = "ERROR!<br>0で剰余は取れません";
+			}
 			this.statusCode = 1;
-		}
-		if( this.output.equals( "_0div" ) ) {
-			this.output = "ERROR! Can not divide Zero!";
-			this.statusCode = -1;
-		} else if( this.output.equals( "_1stack" ) ) {
-			this.output = "ERROR! Num of operand is bad.";
-			this.statusCode = -1;
-		} else if( this.output.equals( "_2p" ) ) {
-			this.output = "ERROR! Near the parenthesis is bad.";
-			this.statusCode = -1;
-		} else if( this.output.equals( "_3+=" ) ) {
-			this.output = "ERROR! One before Equal must be number.";
-			this.statusCode = -1;
-		} else if( this.output.equals( "_4pnum" ) ) {
-			this.output = "ERROR! num of '(' and ')' is wrong";
-			this.statusCode = -1;
-		} else if( this.output.equals( "_5in" ) ) {
-			this.output = "ERROR! input is bad.";
-			this.statusCode = -1;
 		} else if( this.output.equals( "NONE" ) ) {
+			// 入力は正常、入力文字列に追加して何も表示しない
 			this.preInput = this.text;
 			this.output = "";
 			this.statusCode = 0;
+		}else if( this.output.equals( "_0div" ) ) {
+			this.output = "ERROR!<br>0では割れません";
+			this.statusCode = -1;
+		} else if( this.output.equals( "_1stack" ) ) {
+			this.output = "ERROR!<br>被演算子の数が合っていません";
+			this.statusCode = -1;
+		} else if( this.output.equals( "_2p" ) ) {
+			this.output = "ERROR!<br>括弧の付近に誤入力があります";
+			this.statusCode = -1;
+		} else if( this.output.equals( "_3+=" ) ) {
+			this.output = "ERROR!<br>＝の直前は数値か閉じ括弧だけです";
+			this.statusCode = -1;
+		} else if( this.output.equals( "_4pnum" ) ) {
+			this.output = "ERROR!<br>括弧の数があっていません";
+			this.statusCode = -1;
+		} else {
+			// 誤入力なので無視
+			this.output = "";
+			this.statusCode = -1;
 		}
 		return this.output;
 	}
@@ -93,7 +97,7 @@ public class StringCalculator {
 				o = inputStack.pop();
 				s = inputStack.pop();
 				f = inputStack.pop();
-				if( Double.valueOf( s ) == 0 && tmp.equals( "÷" ) ) {
+				if( tmp.equals( "÷" ) && Double.valueOf( s ) == 0 ) {
 					return "_0div";
 				}
 				
@@ -126,6 +130,29 @@ public class StringCalculator {
 		}
 		if( inputStack.size() == 1 ) {
 			o = inputStack.pop();
+			this.preAns = o;
+			// 最後の桁を無視して0が並んでいたら取り除く
+			this.preAns = zeroRemover( this.preAns );
+			
+			// 最後の桁を無視して9が並んでいたら取り除く
+			this.preAns = nineRemover( this.preAns );
+			
+			int length = this.preAns.length();
+			// output[1]の最後に.0が合ったら除く
+			if( length > 2
+					&& this.preAns.charAt( length - 1 ) == '0'
+					&& this.preAns.charAt( length - 2 ) == '.' ){
+				char[] tmp2 = new char[length - 2];
+				for( int i = 0; i < length - 2; i++ ){
+					tmp2[i] = this.preAns.charAt( i );
+				}
+				StringBuilder bf = new StringBuilder();
+				for( int i = 0; i < length - 2; i++ ){
+					bf.append( tmp2[i] );
+				}
+				this.preAns = bf.toString();
+			}
+			o = this.preAns;
 		} else {
 			o = "_1stack";
 		}
@@ -377,6 +404,17 @@ public class StringCalculator {
 		// 良ければ追加
 		String output;
 		
+		// 入力文字列が90文字を超えるときACとBS、= 以外エラー
+		
+		if(
+		   !( this.text.equals( "BS" ) )
+		&& !( this.text.equals( "AC" ) )
+		&& !( this.text.equals( "=" ) )
+		&& inputCounter > 90 ){
+			output = "";
+			return output;
+		}
+		
 		if( this.text.equals( "ANS" ) && this.preInput.equals( "ANS" ) ){
 			output = "";
 			return output;
@@ -392,9 +430,9 @@ public class StringCalculator {
 		}
 		
 		boolean A = inputCharaChecker( this.text );
+		
 		// 入力自体がエラーなら追加せず返す
 		if( !A ) {
-			//output = "_5in";
 			output = "";
 			return output;
 		} else if( this.text.equals( "BS" ) ) {
@@ -409,6 +447,7 @@ public class StringCalculator {
 			this.inputCounter++;
 			output = "NONE";
 			return output;
+			
 		} else if( this.text.equals( "=" ) ) {
 			if( inputCounter > 0 && ( inputString[ inputCounter - 1 ] ).equals( "OPE" ) ) {
 				// =の直前が演算子ならエラー 1+=
@@ -435,7 +474,24 @@ public class StringCalculator {
 				this.inputString[ inputCounter - 1 ] = this.text;
 				output = "NONE";
 				return output;
-				
+			}else
+			// 0の後0以外の数値が入力されたら0を上書き
+			if( this.inputCounter == 1
+					&& inputTypeChecker( this.text ).equals( "NUM" )
+					&& this.inputString[ this.inputCounter - 1 ].equals( "0" ) ){
+				this.inputString[ inputCounter - 1 ] = this.text;
+				output = "NONE";
+				return output;
+			}else
+			// 0の後0以外の数値が入力されたら0を上書き
+			if( this.inputCounter > 1
+					&& inputTypeChecker( this.text ).equals( "NUM" )
+					&& this.inputString[ this.inputCounter - 1 ].equals( "0" )
+					&& !( inputTypeChecker( this.inputString[ this.inputCounter - 2 ] ).equals( "NUM" ) )
+					&& !( inputTypeChecker( this.inputString[ this.inputCounter - 2 ] ).equals( "DOT" ) ) ) {
+				this.inputString[ inputCounter - 1 ] = this.text;
+				output = "NONE";
+				return output;
 			}else {
 				this.inputString[ inputCounter ] = this.text;
 				this.inputCounter++;
@@ -489,12 +545,11 @@ public class StringCalculator {
 						&& ( preS.equals( "NUM" ) || preS.equals( "OTH" ) || preS.equals( "END" ) ) ) {
 						out[ cNumArray ] = text[ i ];
 						cNumArray++;
-				}else if( ( tmpS.equals( "STR" ) ) && ( preS.equals( "OPE" ) ) ) {
+				}else if( tmpS.equals( "STR" ) ) {
 						out[ cNumArray ] = text[ i ];
 						cNumArray++;
 					
-				}else if( (tmpS.equals( "END" ) )
-						&& ( preS.equals( "NUM" ) || preS.equals( "OTH" ) ) ) {
+				}else if( tmpS.equals( "END" ) ) {
 					out[ cNumArray ] = text[ i ];
 					cNumArray++;
 				}else if( (tmpS.equals( "EQU" ) )
@@ -525,7 +580,6 @@ public class StringCalculator {
 	private boolean inputCharaChecker( String text ) {
 		boolean A = false;
 		
-		
 		for( String tmp : this.CHARA ) {
 			if( text.equals( tmp ) ) {
 				A = true;
@@ -535,64 +589,126 @@ public class StringCalculator {
 		if( !A ){
 			// ANSの直接入力
 		}
-		// 括弧の直前、直後のエラー
+		
 		if( A ) {
 			String tmp = inputTypeChecker( text );
+			
+			if( tmp.equals( "END" ) ){
+				// 直前が数値でないならエラー
+				if( !( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "NUM" )
+						|| inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "OTH" )
+						|| inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "END" ) ) ) {
+					A = false;
+					return A;
+				}
+				// 括弧閉じが入力されたとき括弧始めが存在するかチェック
+				int cSTR = 0, cEND = 0;
+				for( int i = 0; i < this.inputCounter; i++ ) {
+					if( inputTypeChecker( this.inputString[ i ] ).equals( "STR" ) ) {
+						cSTR++;
+					}
+					if( inputTypeChecker( this.inputString[ i ] ).equals( "END" ) ) {
+						cEND++;
+					}
+				}
+				if( cSTR > cEND ){
+					A = true;
+					return A;
+				}else{
+					A = false;
+					return A;
+				}
+				
+			}
+			if( tmp.equals( "DOT" ) ) {
+				if( this.inputCounter < 1 ){
+					A = false;
+					return A;
+				}
+				// 直前が数値でないならエラー
+				if( !( inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "NUM" ) )
+				|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "DOT" )
+				|| this.preInput.equals( "ANS" ) ){
+					A = false;
+					return A;
+				}
+				int c = 0;
+				// 直前の数字に小数点がついていないかチェック
+				for( ; c < this.inputCounter; c++ ){
+					if( inputTypeChecker(this.inputString[ this.inputCounter - 1 - c ]).equals( "NUM" ) ){
+						// ok チェック続行
+						continue;
+					}else if( inputTypeChecker(this.inputString[ this.inputCounter - 1 - c ]).equals( "DOT" ) ){
+						// ダメ
+						A = false;
+						return A;
+					}else{
+						// ok 正常終了
+						A = true;
+						return A;
+					}
+				}
+			}
 			
 			if( tmp.equals( "ANS" ) ) {
 				if( this.inputCounter == 0 ) return true;
 				if( inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "NUM" )
-						|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "OTH" ) ){
+				|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "OTH" )
+				|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "END" )
+				|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "DOT" ) ){
 					return false;
 				}else{
 					return true;
 				}
-				
 			}else if( tmp.equals( "EQU" ) ) {
 				if( this.inputCounter == 0 ) return false;
+				
+				// 括弧の数をチェック
+				if( !( inputParenthesesChecker( inputString ) ) ) {
+					A = false;
+					return A;
+				}
+				// 直前の入力が閉じ括弧か数値ならok
 				if( this.inputString[ this.inputCounter - 1 ].equals( ")" )
-						|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "NUM" )
-						|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "OTH" ) ){
+				|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "NUM" )
+				|| inputTypeChecker(this.inputString[ this.inputCounter - 1 ]).equals( "OTH" ) ){
 					return true;
 				}else{
 					A = false;
-					return false;
+					return A;
 				}
 			}else if( tmp.equals( "NUM" ) || tmp.equals( "ANS" ) ) {    // )1
-				
 				if( this.inputCounter == 0 ) return true;
-				if( this.inputString[ this.inputCounter - 1 ].equals( this.preAns ) ){
-					return false;
-				}
-				if( this.inputString[ this.inputCounter ] == null ) {
-					return true;
-				}
-				if( this.inputString[ this.inputCounter ].equals( ")" ) ) {
-					A = false;
-				}
-			}else if( this.inputString[ 0 ] == null ){
-				if( tmp.equals( "STR" ) ){
-					return true;
+				if( this.inputCounter > 0 ) {
+					// )の後に数値はエラー
+					if( this.inputString[ this.inputCounter - 1 ].equals( ")" ) ) {
+						A = false;
+					}
+					// ANSボタンの後に数値はエラー
+					if( this.inputString[ this.inputCounter - 1 ].equals( this.preAns ) ) {
+						return false;
+					}
 				}
 			}
-			// 最初の入力が数字でないならエラー
 			if( this.inputString[ 0 ] == null ) {
+				// 最初の入力が数字か(でないならエラー
+				if( tmp.equals( "STR" ) ) {
+					return true;
+				}
 				return false;
 			}
 			if( tmp.equals( "OPE" ) ) {    // (+
 				if( this.inputString[ this.inputCounter - 1 ].equals( "(" ) ) {
 					A = false;
-				}
-			}
-			if( text.equals( ")" ) ) {  // +)
-				if( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "OPE" ) ) {
-					A = false;
+					return A;
 				}
 			}
 			if( text.equals( "(" ) ) {  // 1(
-				if( !( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "OPE" ) ) ) {
+				if( !( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "OPE" ) )
+				&&  !( inputTypeChecker( this.inputString[ this.inputCounter - 1 ] ).equals( "STR" ) ) ) {
 					// 直前が演算子でないならエラー
 					A = false;
+					return A;
 				}
 			}
 		}

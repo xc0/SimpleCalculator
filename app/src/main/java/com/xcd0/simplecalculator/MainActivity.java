@@ -195,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
 		this.currentDisplaySize = getViewSize( this.mainView );
 		
 		out = mainProcess( text );
+		
 		makeLine( text, out );
 	}
 	
@@ -282,6 +283,12 @@ public class MainActivity extends AppCompatActivity {
 			viewAdder( this.pNum );
 			viewAdder( this.pNum+1 );
 		}
+		
+		scrollView.post( new Runnable() {
+			public void run() {
+				MainActivity.this.scrollView.fullScroll( View.FOCUS_DOWN );
+			}
+		} );
 	}
 	
 	private void viewMaker( int pNum ) {
@@ -320,12 +327,7 @@ public class MainActivity extends AppCompatActivity {
 		this.inputRow[ pNum ].addView( this.inputView[ pNum ] );
 		
 		this.upperScrollView.addView( this.inputRow[ pNum ] );
-		
-		scrollView.post( new Runnable() {
-			public void run() {
-				MainActivity.this.scrollView.fullScroll( View.FOCUS_DOWN );
-			}
-		} );
+		//
 	}
 	
 	private void viewResetter() {
