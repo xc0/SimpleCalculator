@@ -43,19 +43,21 @@ public class StringCalculator {
 		this.text = text;
 		this.output = inputChecker();
 		
-		if( this.output.equals( "OK" ) ) {
-			this.preInput = this.text;
-			this.output = calcStringArray( this.inputArray );
-			if( this.output.equals( "NaN" ) ){
-				this.output = "ERROR!<br>0で剰余は取れません";
-			}
-			this.statusCode = 1;
-		} else if( this.output.equals( "NONE" ) ) {
+		if( this.output.equals( "NONE" ) ) {
 			// 入力は正常、入力文字列に追加して何も表示しない
 			this.preInput = this.text;
 			this.output = "";
 			this.statusCode = 0;
-		}else if( this.output.equals( "_0div" ) ) {
+		}
+		if( this.output.equals( "OK" ) ) {
+			this.preInput = this.text;
+			this.output = calcStringArray( this.inputArray );
+			this.statusCode = 1;
+			if( this.output.equals( "NaN" ) ){
+				this.output = "ERROR!<br>0で剰余は取れません";
+			}
+		}
+		if( this.output.equals( "_0div" ) ) {
 			this.output = "ERROR!<br>0では割れません";
 			this.statusCode = -1;
 		} else if( this.output.equals( "_1stack" ) ) {
@@ -69,10 +71,6 @@ public class StringCalculator {
 			this.statusCode = -1;
 		} else if( this.output.equals( "_4pnum" ) ) {
 			this.output = "ERROR!<br>括弧の数があっていません";
-			this.statusCode = -1;
-		} else {
-			// 誤入力なので無視
-			this.output = "";
 			this.statusCode = -1;
 		}
 		return this.output;
@@ -163,32 +161,57 @@ public class StringCalculator {
 		int length = in.length();
 		String out;
 		out = in;
+		// 9以外の数字があるか
+		boolean A = false;
+		for(int k = 0; k < length; k++ ){
+			if( '9' != in.charAt( k ) && '.' != in.charAt( k )  )
+				A = true;
+		}
+		if( !A ) return in;
+		// 先頭に0を付与
+		if( in.charAt( 0 ) == '9' ) {
+			StringBuilder bf = new StringBuilder();
+			bf.append( "0" );
+			bf.append( in );
+			in = bf.toString();
+		}
 		// 最後の桁を無視して0が並んでいたら取り除く
 		if( length > 2 ) {
-			int i = length - 2, j = 0;
-			while( i > 0 && in.charAt( i ) == '9' ) {
+			int i = length - 2, j = 0, d = 0, e = length - 2;
+			while( i >= 0 && (in.charAt( i ) == '9' || in.charAt( i ) == '.') ) {
 				j++;
 				i--;
 			}
-			// j個 9が並んでいる
-			if( j > 0 ){
+			while( e-- > 0 ) {
+				if( in.charAt( e ) == '.' ){
+					d = e;
+				}
+			}
+			// 9が j個 並んでいる
+			if( j > 7 ){
 				char[] tmp2 = {};
 				// 最後の文字が9ならそれも追加
 				if( in.charAt( length - 1 ) == '9' ) {
 					j++;
-					// 0の並びの先頭が小数点ならそれも削除
+					// 9の並びの先頭が小数点ならそれも削除
 					if( in.charAt( length - j - 1 ) == '.' ) {
 						// 0.999 -> l = 5, j = 3, l-j-1 = 1
 						int k = 0;
-						tmp2 = new char[ length - j - 1 ];
-						while( k < length - j - 1  && in.charAt( k ) != '.' ) {
+						int l = length - j - 1;
+						if( length - j - 1 < d ) l = d;
+						tmp2 = new char[ l ];
+						for( int m = 0; m < l; m++ ){tmp2[m] = '0';}
+						while( k < l  && in.charAt( k ) != '.' ) {
 							tmp2[ k ] = in.charAt( k );
 							k++;
 						}
 						tmp2[ length - j - 2 ] = ( String.valueOf( Character.getNumericValue( tmp2[ length - j - 2 ] ) + 1 ) ).charAt( 0 );
 					}else{
 						//tmp2 = new char[ length - j - 1 ];
-						tmp2 = new char[ i + 1 ];
+						int l = i + 1;
+						if( i + 1 < d ) l = d;
+						tmp2 = new char[ l ];
+						for( int m = 0; m < l; m++ ){tmp2[m] = '0';}
 						int k = 0;
 						while( k < i + 1 ) {
 							tmp2[ k ] = in.charAt( k );
@@ -200,18 +223,22 @@ public class StringCalculator {
 				}else if( in.charAt( length - 2 ) == '9' ){
 					// 1.9998 -> l = 6, j = 3, l-1 - j-1 = 1
 					if( in.charAt( length - j - 2 ) == '.' ) {
-						int k = 0;
-						tmp2 = new char[ length - j - 2 ];
-						while( k < length - j - 2  && in.charAt( k ) != '.' ) {
+						int k = 0, l = length - j - 2;
+						if( length - j - 2 < d ) l = d;
+						tmp2 = new char[ l ];
+						for( int m = 0; m < l; m++ ){tmp2[m] = '0';}
+						while( k < l  && in.charAt( k ) != '.' ) {
 							tmp2[ k ] = in.charAt( k );
 							k++;
 						}
-						tmp2[ length - j - 2 ] = ( String.valueOf( Character.getNumericValue( tmp2[ length - j - 2 ] ) + 1 ) ).charAt( 0 );
+						tmp2[ l ] = ( String.valueOf( Character.getNumericValue( tmp2[ length - j - 2 ] ) + 1 ) ).charAt( 0 );
 					} else {
 						// 1.799998  -> l = 8, j = 4, l-1 - j = 3
-						int k = 0;
-						tmp2 = new char[ length - j - 1 ];
-						while( k < length - j - 1  ) {
+						int k = 0, l = length - j - 1;
+						if( length - j - 1 < d ) l = d;
+						tmp2 = new char[ l ];
+						for( int m = 0; m < l; m++ ){tmp2[m] = '0';}
+						while( k < l  ) {
 							tmp2[ k ] = in.charAt( k );
 							k++;
 						}
@@ -219,11 +246,11 @@ public class StringCalculator {
 					}
 				}
 				if( tmp2.length > 0 ) {
-					StringBuilder bf = new StringBuilder();
+					StringBuilder bf2 = new StringBuilder();
 					for( i = 0; i < tmp2.length; i++ ) {
-						bf.append( tmp2[ i ] );
+						bf2.append( tmp2[ i ] );
 					}
-					out = bf.toString();
+					out = bf2.toString();
 				}
 			}
 		}
@@ -242,7 +269,7 @@ public class StringCalculator {
 				i--;
 			}
 			// j個 0が並んでいる
-			if( j > 0 ){
+			if( j > 7 ){
 				char[] tmp2 = {};
 				// 最後の文字が0ならそれも追加
 				if( in.charAt( length - 1 ) == '0' ) {
@@ -698,7 +725,8 @@ public class StringCalculator {
 				return false;
 			}
 			if( tmp.equals( "OPE" ) ) {    // (+
-				if( this.inputString[ this.inputCounter - 1 ].equals( "(" ) ) {
+				if( this.inputString[ this.inputCounter - 1 ].equals( "(" )
+					|| this.inputString[ this.inputCounter - 1 ].equals( "." )) {
 					A = false;
 					return A;
 				}
@@ -810,6 +838,10 @@ public class StringCalculator {
 		}
 		out = bf.toString();
 		return out;
+	}
+	
+	public int getInputCounter() {
+		return this.inputCounter;
 	}
 	
 	public String getOutputString() {
