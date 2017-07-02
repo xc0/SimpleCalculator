@@ -1,11 +1,16 @@
 package com.xcd0.simplecalculator;
 
+import android.content.Context;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.StrictMode;
 import android.os.Bundle;
 
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AbsListView;
@@ -13,7 +18,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.LinearLayout;
 import android.widget.Button;
-
+import android.content.pm.ActivityInfo;
 import android.text.Html;
 
 import android.content.res.Configuration;
@@ -25,13 +30,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Gravity;
 
+import static java.security.AccessController.getContext;
+
 public class MainActivity extends AppCompatActivity {
 	
-	private final int MP = LinearLayout.LayoutParams.MATCH_PARENT;
-	private final int WC = LinearLayout.LayoutParams.WRAP_CONTENT;
+	private int MP = LinearLayout.LayoutParams.MATCH_PARENT;
+	private int WC = LinearLayout.LayoutParams.WRAP_CONTENT;
 	
 	private int pNum = -1;
-	private int dp1 = 0;
+	private float dp1 = 0;
 	private float dp = 0;
 	private LinearLayout mainView;
 	private LinearLayout upperView;
@@ -43,13 +50,16 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
 	private Button[] button = new Button[ buttonRow.length * 5 ];
-	
 	private String[] pre = {"", "", ""};
 	private StringCalculator SC = new StringCalculator();
-	
+	//private String ff = "GenShinGothic-ExtraLight.ttf";
 	private LinearLayout.LayoutParams[] bl = new LinearLayout.LayoutParams[25];
-	
 	private Point currentDisplaySize;
+	private float upperFontSize = 11 * dp;
+	private int fontColor = 0xff000000;
+	private float buttonTextsize = 13 * dp1;
+	private int mvWidth;
+	private int mvHeight;
 	
 	String[] tmp = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "AC", "BS", "=", "+", "-", "×", "÷", "%", "^", "(", ")", "ANS" };
 	
@@ -63,7 +73,11 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public void onCreate( Bundle savedInstanceState ) {
 		super.onCreate( savedInstanceState );
+		
 		getWindow().addFlags( WindowManager.LayoutParams.FLAG_FULLSCREEN );
+		
+		// 縦向き固定
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
 		for( int i = 0; i < 5; i++ ){
 			this.buttonRow[i] = new LinearLayout( this );
@@ -74,13 +88,14 @@ public class MainActivity extends AppCompatActivity {
 		}
 		
 		makeMainLayout();
+		
 		for( int i = 0; i < buttonRow.length; i++ ) {
 			this.buttonRow[ i ].setOrientation( LinearLayout.HORIZONTAL );
 			LinearLayout.LayoutParams br = new LinearLayout.LayoutParams( MP, 0 );
 			br.weight = 1;
 			this.buttonRow[ i ].setGravity( Gravity.CENTER_HORIZONTAL );
 			this.buttonRow[ i ].setLayoutParams( br );
-			this.buttonRow[ i ].setPadding( 0, dp1, 0, 0 );
+			this.buttonRow[ i ].setPadding( 0, (int)dp1, 0, 0 );
 			lowerView.addView( buttonRow[ i ] );
 			
 			for( int j = 0; j < 5; j++ ) {
@@ -89,7 +104,8 @@ public class MainActivity extends AppCompatActivity {
 					break;
 				this.button[ num ].setText( bLabel[ num ] );
 				this.button[ num ].setTag( bLabel[ num ] );
-				this.button[ num ].setTextSize( 10 * dp1 );
+				this.button[ num ].setTextSize( this.buttonTextsize );
+				this.button[ num ].setTypeface(Typeface.SANS_SERIF);
 				button[ num ].setBackgroundColor( Color.rgb( 255, 255, 255 ) );
 				
 				bl[ num ] = new LinearLayout.LayoutParams( 0, MP );
@@ -104,14 +120,14 @@ public class MainActivity extends AppCompatActivity {
 				if( num == 20 || num == 21 ) {
 					LinearLayout empty = new LinearLayout( this );
 					empty.setOrientation( LinearLayout.HORIZONTAL );
-					LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( dp1, MP );
+					LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( (int)dp1, MP );
 					empty.setLayoutParams( zero );
 					buttonRow[ i ].addView( empty );
 				}else {
 					if( j != 4 || num != 22 ) {
 						LinearLayout empty = new LinearLayout( this );
 						empty.setOrientation( LinearLayout.HORIZONTAL );
-						LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( dp1, MP );
+						LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( (int)dp1, MP );
 						empty.setLayoutParams( zero );
 						buttonRow[ i ].addView( empty );
 					}
@@ -125,6 +141,8 @@ public class MainActivity extends AppCompatActivity {
 			}
 			
 		}
+		
+		
 		VTO:
 		{
 			ViewTreeObserver oMV = mainView.getViewTreeObserver();
@@ -164,7 +182,17 @@ public class MainActivity extends AppCompatActivity {
 	}
 	
 	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		
+		fontsizeUpdater();
+	}
+	
+	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
+		
+		fontsizeUpdater();
+		
 		switch( newConfig.orientation ) {
 			case Configuration.ORIENTATION_PORTRAIT:    // 縦
 				this.mainView.setOrientation( LinearLayout.VERTICAL );
@@ -192,11 +220,60 @@ public class MainActivity extends AppCompatActivity {
 	public void buttonClicked( String text ) {
 		String[] out;
 		
+		fontsizeUpdater();
+		
 		this.currentDisplaySize = getViewSize( this.mainView );
 		
 		out = mainProcess( text );
 		
 		makeLine( text, out );
+	}
+	
+	
+	
+	private void fontsizeUpdater(){
+		
+		this.mvWidth = mainView.getWidth();
+		this.mvHeight = mainView.getHeight();
+		int minWH = this.mvHeight < this.mvWidth ? this.mvHeight : this.mvWidth;
+		this.dp = getResources().getDisplayMetrics().density;
+		
+		DisplayMetrics metrics = getResources().getDisplayMetrics();
+		float dp1 = metrics.density;
+		
+		if( minWH < 500 ){
+			this.upperFontSize = 3 * dp1;
+			this.buttonTextsize = (int)(3 * dp1);
+		}
+		if( minWH < 900 ){
+			this.upperFontSize = 30 * dp;
+			this.buttonTextsize = 30  * dp1;
+		}
+		if( minWH < 1200 ){
+			this.upperFontSize = 25  * dp1;
+			this.buttonTextsize = 25  * dp1;
+		}
+		if( minWH < 1500 ){
+			this.upperFontSize = 13  * dp1;
+			this.buttonTextsize = 13  * dp1;
+		}
+		if( minWH >= 1500 ){
+			this.upperFontSize = 11  * dp1;
+			this.buttonTextsize = 11  * dp1;
+		}
+		//this.upperFontSize = 50 * (int)Math.pow( (minWH-300) , 2d ) / (minWH+1700000) + 25;
+		//this.buttonTextsize = 50 * (int)Math.pow( (minWH-300) , 2d ) / (minWH+1700000) + 25;
+		
+		for( int i = 0; i < this.pNum; i++ ){
+			this.inputView[i].setTextSize( this.upperFontSize );
+			this.inputView[i].setTypeface(Typeface.SANS_SERIF);
+		}
+		for(int i = 0; i < 25; i++ ){
+			this.button[ i ].setTextSize( this.buttonTextsize );
+			if( i < 3 )
+				this.button[ i ].setTextSize( this.buttonTextsize*4/5 );
+				this.button[ i ].setTypeface(Typeface.SANS_SERIF);
+		}
 	}
 	
 	private String[] mainProcess( String text ){
@@ -243,7 +320,6 @@ public class MainActivity extends AppCompatActivity {
 			preOutput = ( String ) this.inputView[ 199 ].getText();
 			viewResetter();
 			this.inputView[ pNum+1 ].setText( preOutput );
-			
 		}
 		
 		// 0 input
@@ -251,6 +327,8 @@ public class MainActivity extends AppCompatActivity {
 		// 2 statusCode
 		if( this.pNum == -1 ){
 			this.pNum++;
+			
+			
 			viewMaker( this.pNum );
 			viewMaker( this.pNum+1 );
 			StringBuffer bf = new StringBuffer();
@@ -258,13 +336,17 @@ public class MainActivity extends AppCompatActivity {
 			bf.append( Integer.toString( this.pNum / 2 ) );
 			bf.append( ": " );
 			this.lineNum[ pNum ].setText( bf.toString() );
-			this.lineNum[ pNum+1 ].setText( "      " );
+			this.lineNum[ pNum+1 ].setText( " " );
+			this.lineNum[ pNum ].setTypeface(Typeface.SANS_SERIF);
+			this.lineNum[ pNum+1 ].setTypeface(Typeface.SANS_SERIF);
 			viewAdder( this.pNum );
 			viewAdder( this.pNum + 1 );
 		}
 		
 		this.inputView[ pNum ].setText( Html.fromHtml( out[ 0 ] ) );
 		this.inputView[ pNum+1 ].setText( Html.fromHtml( out[ 1 ] ) );
+		this.inputView[ pNum ].setTypeface(Typeface.SANS_SERIF);
+		this.inputView[ pNum+1 ].setTypeface(Typeface.SANS_SERIF);
 		
 		if( out[2].equals( "1" ) ) {
 			//viewAdder( this.pNum+1 );
@@ -272,14 +354,29 @@ public class MainActivity extends AppCompatActivity {
 			
 			this.lineNum[ pNum+1 ].setText( "   >> " );
 			
+			View empty = new View( this );
+			empty.setBackgroundColor( Color.rgb( 255, 255, 255 ) );
+			LinearLayout.LayoutParams zero = new LinearLayout.LayoutParams( MP, 2 );
+			empty.setLayoutParams( zero );
+			this.upperScrollView.addView( empty );
+			
+			View empty1 = new View( this );
+			empty1.setBackgroundColor( Color.rgb( 255, 255, 255 ) );
+			LinearLayout.LayoutParams zero1 = new LinearLayout.LayoutParams( 10, MP );
+			empty1.setLayoutParams( zero1 );
+			this.inputRow[pNum].addView( empty1 );
+			
 			this.pNum += 2;
 			viewMaker( this.pNum );
 			viewMaker( this.pNum+1 );
 			StringBuffer bf = new StringBuffer();
+			bf.append( "" );
 			bf.append( Integer.toString( this.pNum / 2 ) );
-			bf.append( ": "  );
+			bf.append( ": " );
 			this.lineNum[ pNum ].setText( bf.toString() );
-			this.lineNum[ pNum+1 ].setText( "      " );
+			this.lineNum[ pNum+1 ].setText( " " );
+			this.lineNum[ pNum ].setTypeface(Typeface.SANS_SERIF);
+			this.lineNum[ pNum+1 ].setTypeface(Typeface.SANS_SERIF);
 			viewAdder( this.pNum );
 			viewAdder( this.pNum+1 );
 		}
@@ -293,40 +390,55 @@ public class MainActivity extends AppCompatActivity {
 	
 	private void viewMaker( int pNum ) {
 		
-		float upperFontSize = 11 * dp;
-		int fontColor = 0xff000000;
+		
+		this.mvWidth = mainView.getWidth();
+		this.mvHeight = mainView.getHeight();
+		int minWH = this.mvHeight < this.mvWidth ? this.mvHeight : this.mvWidth;
 		
 		// 行の表示をまとめる要素を作成
 		this.inputRow[ pNum ] = new LinearLayout( this );
 		this.inputRow[ pNum ].setOrientation( LinearLayout.HORIZONTAL );
 		LinearLayout.LayoutParams ir = new LinearLayout.LayoutParams( WC, MP );
-		this.inputRow[ pNum ].setPadding( 0, dp1, 0, 0 );
+		this.inputRow[ pNum ].setPadding( 0, (int)dp1, 0, 0 );
 		this.inputRow[ pNum ].setLayoutParams( ir );
 		
 		// 行番号を表示する要素を作成
 		this.lineNum[ pNum ] = new TextView( this );
-		this.lineNum[ pNum ].setGravity( Gravity.RIGHT );
-		this.lineNum[ pNum ].setTextColor( fontColor );
-		this.lineNum[ pNum ].setTextSize( upperFontSize );
-		LinearLayout.LayoutParams ln = new LinearLayout.LayoutParams( 0, MP );
-		ln.weight = 1;
+		this.lineNum[ pNum ].setGravity( Gravity.TOP );
+		this.lineNum[ pNum ].setTextColor( this.fontColor );
+		this.lineNum[ pNum ].setTextSize( this.upperFontSize );
+		LinearLayout.LayoutParams ln = new LinearLayout.LayoutParams( minWH / 5 -10, MP );
+		//ln.weight = 2;
 		this.lineNum[ pNum ].setLayoutParams( ln );
 		
 		// 文字列を表示する要素を作成
 		this.inputView[ pNum ] = new TextView( this );
-		this.inputView[ pNum ].setGravity( Gravity.LEFT );
-		this.inputView[ pNum ].setTextColor( fontColor );
-		this.inputView[ pNum ].setTextSize( upperFontSize );
-		LinearLayout.LayoutParams io = new LinearLayout.LayoutParams( 0, MP );
-		io.weight = 9;
+		this.inputView[ pNum ].setGravity( Gravity.END);
+		this.inputView[ pNum ].setTextColor( this.fontColor );
+		this.inputView[ pNum ].setTextSize( this.upperFontSize );
+		LinearLayout.LayoutParams io = new LinearLayout.LayoutParams( minWH * 4 / 5 - 11, MP );
+		//io.weight = 5;
 		this.inputView[ pNum ].setLayoutParams( io );
 	}
 	
 	private void viewAdder( int pNum ) {
+		
+		View empty1 = new View( this );
+		empty1.setBackgroundColor( Color.rgb( 255, 255, 255 ) );
+		LinearLayout.LayoutParams zero1 = new LinearLayout.LayoutParams( 10, MP );
+		empty1.setLayoutParams( zero1 );
+		View empty2 = new View( this );
+		empty2.setBackgroundColor( Color.rgb( 255, 255, 255 ) );
+		LinearLayout.LayoutParams zero2 = new LinearLayout.LayoutParams( 10, MP );
+		empty2.setLayoutParams( zero2 );
+		
+		
+		this.inputRow[pNum].addView( empty1 );
 		this.inputRow[ pNum ].addView( this.lineNum[ pNum ] );
 		this.inputRow[ pNum ].addView( this.inputView[ pNum ] );
 		
 		this.upperScrollView.addView( this.inputRow[ pNum ] );
+		this.inputRow[pNum].addView( empty2 );
 		//
 	}
 	
@@ -355,6 +467,7 @@ public class MainActivity extends AppCompatActivity {
 		uv.weight = 3;
 		this.upperView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
 		this.upperView.setLayoutParams( uv );
+		this.upperView.setGravity( Gravity.RIGHT );
 		
 		this.dp = getResources().getDisplayMetrics().density;
 		this.dp1 = ( int ) dp;
@@ -365,6 +478,7 @@ public class MainActivity extends AppCompatActivity {
 		usv.weight = 3;
 		this.upperScrollView.setBackgroundColor( Color.rgb( 240, 240, 240 ) );
 		this.upperScrollView.setLayoutParams( usv );
+		this.upperScrollView.setGravity( Gravity.CENTER_HORIZONTAL );
 		scrollView.addView( this.upperScrollView, new LinearLayout.LayoutParams( MP, WC) );
 		
 		

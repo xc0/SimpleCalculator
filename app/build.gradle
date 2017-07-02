@@ -7,8 +7,8 @@ android {
 		applicationId "com.xcd0.simplecalculator"
 		minSdkVersion 21
 		targetSdkVersion 26
-		versionCode 8
-		versionName "0.1.8"
+		versionCode 12
+		versionName "0.1.12"
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 	}
 	buildTypes {
