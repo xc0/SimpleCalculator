@@ -17,7 +17,7 @@ import android.widget.AbsListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.LinearLayout;
-import android.widget.Button;
+//import android.widget.Button;
 import android.content.pm.ActivityInfo;
 import android.text.Html;
 
@@ -29,6 +29,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Gravity;
+import android.util.TypedValue;
 
 import static java.security.AccessController.getContext;
 
@@ -47,17 +48,19 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout[] inputRow = new LinearLayout[ 200 ];
 	private TextView[] lineNum = new TextView[ 200 ];
 	private TextView[] inputView = new TextView[ 200 ];
+	
+	
 	private LinearLayout lowerView;
 	private LinearLayout[] buttonRow = new LinearLayout[ 5 ];
-	private Button[] button = new Button[ buttonRow.length * 5 ];
+	//private Button[] button = new Button[ buttonRow.length * 5 ];
+	private FontFitButton[] button = new FontFitButton[ buttonRow.length * 5 ];
+	
 	private String[] pre = {"", "", ""};
 	private StringCalculator SC = new StringCalculator();
 	//private String ff = "GenShinGothic-ExtraLight.ttf";
 	private LinearLayout.LayoutParams[] bl = new LinearLayout.LayoutParams[25];
 	private Point currentDisplaySize;
-	private float upperFontSize = 11 * dp;
 	private int fontColor = 0xff000000;
-	private float buttonTextsize = 13 * dp1;
 	private int mvWidth;
 	private int mvHeight;
 	
@@ -83,8 +86,13 @@ public class MainActivity extends AppCompatActivity {
 			this.buttonRow[i] = new LinearLayout( this );
 			
 			for( int j = 0; j < 5; j++ ){
-				this.button[i*5+j] = new Button( this );
+				this.button[i*5+j] = new FontFitButton( this );
+				this.button[i*5+j].setGravity( Gravity.CENTER );
+				this.button[i*5+j].setTextSize( 100f );
+				this.button[i*5+j].setPadding(0, 5, 0, 5);
 			}
+			this.button[3].setPadding(0, 3, 5, 5);
+			this.button[4].setPadding(5, 3, 0, 5);
 		}
 		
 		makeMainLayout();
@@ -96,7 +104,8 @@ public class MainActivity extends AppCompatActivity {
 			this.buttonRow[ i ].setGravity( Gravity.CENTER_HORIZONTAL );
 			this.buttonRow[ i ].setLayoutParams( br );
 			this.buttonRow[ i ].setPadding( 0, (int)dp1, 0, 0 );
-			lowerView.addView( buttonRow[ i ] );
+			this.lowerView.addView( buttonRow[ i ] );
+			
 			
 			for( int j = 0; j < 5; j++ ) {
 				int num = i * 5 + j;
@@ -104,18 +113,17 @@ public class MainActivity extends AppCompatActivity {
 					break;
 				this.button[ num ].setText( bLabel[ num ] );
 				this.button[ num ].setTag( bLabel[ num ] );
-				this.button[ num ].setTextSize( this.buttonTextsize );
 				this.button[ num ].setTypeface(Typeface.SANS_SERIF);
-				button[ num ].setBackgroundColor( Color.rgb( 255, 255, 255 ) );
 				
-				bl[ num ] = new LinearLayout.LayoutParams( 0, MP );
+				this.button[ num ].setBackgroundColor( Color.rgb( 255, 255, 255 ) );
+				
+				this.bl[ num ] = new LinearLayout.LayoutParams( 0, MP );
 				this.bl[ num ].weight = 1;
-				//if( b0w < 0 && num == 16 )
 				if( num == 20 || num == 22 ) {
-					bl[ num ].weight = 2;
+					this.bl[ num ].weight = 2;
 				}
-				button[ num ].setLayoutParams( bl[ num ] );
-				buttonRow[ i ].addView( button[ num ] );
+				this.button[ num ].setLayoutParams( bl[ num ] );
+				this.buttonRow[ i ].addView( button[ num ] );
 				
 				if( num == 20 || num == 21 ) {
 					LinearLayout empty = new LinearLayout( this );
@@ -141,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 			}
 			
 		}
-		
+		/*
 		
 		VTO:
 		{
@@ -178,20 +186,21 @@ public class MainActivity extends AppCompatActivity {
 				}
 			} );
 			
-		}
+		}*/
 	}
 	
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		
-		fontsizeUpdater();
+		fontSizeUpdater();
+		
 	}
 	
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		
-		fontsizeUpdater();
+		fontSizeUpdater();
 		
 		switch( newConfig.orientation ) {
 			case Configuration.ORIENTATION_PORTRAIT:    // 縦
@@ -220,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
 	public void buttonClicked( String text ) {
 		String[] out;
 		
-		fontsizeUpdater();
+		fontSizeUpdater();
 		
 		this.currentDisplaySize = getViewSize( this.mainView );
 		
@@ -229,51 +238,27 @@ public class MainActivity extends AppCompatActivity {
 		makeLine( text, out );
 	}
 	
-	
-	
-	private void fontsizeUpdater(){
+	private void fontSizeUpdater() {
+		this.button[1].resize();
+		float b1s = this.button[ 1 ].getTextSize();
+		this.button[0].setTextSize( TypedValue.COMPLEX_UNIT_PX, b1s );
+		this.button[2].setTextSize( TypedValue.COMPLEX_UNIT_PX, b1s );
 		
-		this.mvWidth = mainView.getWidth();
-		this.mvHeight = mainView.getHeight();
-		int minWH = this.mvHeight < this.mvWidth ? this.mvHeight : this.mvWidth;
-		this.dp = getResources().getDisplayMetrics().density;
 		
-		DisplayMetrics metrics = getResources().getDisplayMetrics();
-		float dp1 = metrics.density;
+		for( int i = 3; i < 25; i++ ) {
+			this.button[ i ].resize();
+			this.button[ i ].setTypeface( Typeface.SANS_SERIF );
+		}
+		for( int i = 0; i < this.pNum; i++ ) {
+			this.inputView[ i ].setTextSize( TypedValue.COMPLEX_UNIT_PX, b1s );
+			this.inputView[ i ].setTypeface( Typeface.SANS_SERIF );
+		}
 		
-		if( minWH < 500 ){
-			this.upperFontSize = 3 * dp1;
-			this.buttonTextsize = (int)(3 * dp1);
-		}
-		if( minWH < 900 ){
-			this.upperFontSize = 30 * dp;
-			this.buttonTextsize = 30  * dp1;
-		}
-		if( minWH < 1200 ){
-			this.upperFontSize = 25  * dp1;
-			this.buttonTextsize = 25  * dp1;
-		}
-		if( minWH < 1500 ){
-			this.upperFontSize = 13  * dp1;
-			this.buttonTextsize = 13  * dp1;
-		}
-		if( minWH >= 1500 ){
-			this.upperFontSize = 11  * dp1;
-			this.buttonTextsize = 11  * dp1;
-		}
-		//this.upperFontSize = 50 * (int)Math.pow( (minWH-300) , 2d ) / (minWH+1700000) + 25;
-		//this.buttonTextsize = 50 * (int)Math.pow( (minWH-300) , 2d ) / (minWH+1700000) + 25;
 		
-		for( int i = 0; i < this.pNum; i++ ){
-			this.inputView[i].setTextSize( this.upperFontSize );
-			this.inputView[i].setTypeface(Typeface.SANS_SERIF);
-		}
-		for(int i = 0; i < 25; i++ ){
-			this.button[ i ].setTextSize( this.buttonTextsize );
-			if( i < 3 )
-				this.button[ i ].setTextSize( this.buttonTextsize*4/5 );
-				this.button[ i ].setTypeface(Typeface.SANS_SERIF);
-		}
+		this.button[0].setTextSize( TypedValue.COMPLEX_UNIT_PX, b1s );
+		this.button[2].setTextSize( TypedValue.COMPLEX_UNIT_PX, b1s );
+		//this.button[3].setTextSize( TypedValue.COMPLEX_UNIT_PX, this.button[ 3 ].getTextSize() - 4 );
+		//this.button[4].setTextSize( TypedValue.COMPLEX_UNIT_PX, this.button[ 4 ].getTextSize() - 4 );
 	}
 	
 	private String[] mainProcess( String text ){
@@ -390,7 +375,6 @@ public class MainActivity extends AppCompatActivity {
 	
 	private void viewMaker( int pNum ) {
 		
-		
 		this.mvWidth = mainView.getWidth();
 		this.mvHeight = mainView.getHeight();
 		int minWH = this.mvHeight < this.mvWidth ? this.mvHeight : this.mvWidth;
@@ -406,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
 		this.lineNum[ pNum ] = new TextView( this );
 		this.lineNum[ pNum ].setGravity( Gravity.TOP );
 		this.lineNum[ pNum ].setTextColor( this.fontColor );
-		this.lineNum[ pNum ].setTextSize( this.upperFontSize );
+		this.lineNum[ pNum ].setTextSize( TypedValue.COMPLEX_UNIT_PX, this.button[1].getTextSize() );
 		LinearLayout.LayoutParams ln = new LinearLayout.LayoutParams( minWH / 5 -10, MP );
 		//ln.weight = 2;
 		this.lineNum[ pNum ].setLayoutParams( ln );
@@ -415,7 +399,7 @@ public class MainActivity extends AppCompatActivity {
 		this.inputView[ pNum ] = new TextView( this );
 		this.inputView[ pNum ].setGravity( Gravity.END);
 		this.inputView[ pNum ].setTextColor( this.fontColor );
-		this.inputView[ pNum ].setTextSize( this.upperFontSize );
+		this.inputView[ pNum ].setTextSize( TypedValue.COMPLEX_UNIT_PX, this.button[1].getTextSize() );
 		LinearLayout.LayoutParams io = new LinearLayout.LayoutParams( minWH * 4 / 5 - 11, MP );
 		//io.weight = 5;
 		this.inputView[ pNum ].setLayoutParams( io );
@@ -507,7 +491,4 @@ public class MainActivity extends AppCompatActivity {
 		return point;
 	}
 	
-	public void viewSizeChecker(){
-		
-	}
 }
